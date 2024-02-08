@@ -18,7 +18,7 @@ app = Flask(__name__)
 @app.route("/profile/<user_id>")
 def profile(user_id):
     # URL of the microservice
-    microservice_url = "http://path-to-your-microservice/get-user-settings"
+    microservice_url = "http://51.11.180.99:5000/get-user-settings"
 
     # Make a POST request to the microservice
     response = requests.post(microservice_url, json={"user_id": user_id})
