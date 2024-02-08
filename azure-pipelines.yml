@@ -39,8 +39,8 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip install -r main-site/api/requirements.txt
-      working-directory: .
+        pip install -r requirements.txt
+      working-directory: main-site/api/
 
     - name: Zip the application
       run: zip -r app.zip . -x "*.git*"
