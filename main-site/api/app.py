@@ -60,6 +60,12 @@ def index():
     # return index 1
     return render_template("index.html")
 
+# Configure routing
+@app.route("/home", methods=["GET"])
+def index():
+    # return index 1
+    return render_template("index.html")
+
 
 @app.errorhandler(404)
 def not_found(e):
