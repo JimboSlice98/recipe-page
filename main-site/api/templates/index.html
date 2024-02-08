@@ -2,12 +2,12 @@
 
 {% block content %}
 
+<!-- Display user settings -->
 <div class="card mb-3">
     <div class="card-body">
-        <h3 class="card-title">Profile Info</h3>
-        <p class="card-text"><strong>User ID:</strong> {{ user_settings.user_id }}</p>
-        <p class="card-text"><strong>Cooking Ability:</strong> {{ user_settings.cooking_level }}</p>
-        <p class="card-text"><strong>Birthday:</strong> {{ user_settings.birthday }}</p>
+        <h5 class="card-title">Welcome, User {{ user_settings.user_id }}</h5>
+        <p class="card-text">Cooking Level: {{ user_settings.cooking_level }}</p>
+        <p class="card-text">Birthday: {{ user_settings.birthday }}</p>
     </div>
 </div>
 
