@@ -15,6 +15,22 @@ from requests.exceptions import HTTPError, RequestException
 # Configure app.py
 app = Flask(__name__)
 
+@app.route("/profile/<user_id>")
+def profile(user_id):
+    # URL of the microservice
+    microservice_url = "http://path-to-your-microservice/get-user-settings"
+
+    # Make a POST request to the microservice
+    response = requests.post(microservice_url, json={"user_id": user_id})
+
+    if response.status_code == 200:
+        # If the request was successful, extract data and pass to the template
+        user_settings = response.json()
+        return render_template("profile.html", user_settings=user_settings)
+    else:
+        # Handle errors or redirect as appropriate
+        return "User settings not found", 404
+
 # Load environment variables
 # load_dotenv()
 
