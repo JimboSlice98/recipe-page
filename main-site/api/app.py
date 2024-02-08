@@ -57,6 +57,7 @@ app = Flask(__name__)
 # Configure routing
 @app.route("/", methods=["GET"])
 def index():
+    # return index
     return render_template("index.html")
 
 
