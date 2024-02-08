@@ -62,7 +62,7 @@ def index():
 
 # Configure routing
 @app.route("/home", methods=["GET"])
-def index():
+def home():
     # return index 1
     return render_template("index.html")
 
