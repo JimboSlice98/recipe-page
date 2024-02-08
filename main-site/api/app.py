@@ -70,11 +70,26 @@ def profile(user_id):
 #     return requests.get(GOOGLE_DISCOVERY_URL).json()
 
 
-# Configure routing
 @app.route("/", methods=["GET"])
 def index():
-    # return index 1
-    return render_template("index.html")
+    # Hardcoded user ID for demonstration
+    user_id = "1"
+    
+    # URL of the microservice
+    microservice_url = "http://51.11.180.99:5000/get-user-settings"
+    
+    # Make a POST request to the microservice
+    response = requests.post(microservice_url, json={"user_id": user_id})
+    
+    if response.status_code == 200:
+        # If the request was successful, extract data and pass to the template
+        user_settings = response.json()
+    else:
+        # Handle errors or provide default data
+        user_settings = {"user_id": "not found", "cooking_level": "Unknown", "birthday": "Unknown"}
+    
+    return render_template("index.html", user_settings=user_settings)
+
 
 # Configure routing
 @app.route("/home", methods=["GET"])
