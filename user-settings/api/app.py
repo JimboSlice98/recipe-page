@@ -22,7 +22,7 @@ def get_user_settings():
     
 @app.route("/home", methods=["GET"])
 def home():
-    # return index 1
+    # temporary
     return render_template("index.html")
 
 
