@@ -41,7 +41,7 @@ jobs:
               --resource-group SSE-recipe \
               --name sse-user-settings \
               --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
-              --dns-name-label sse-user-settings.fte4g2amajbfdtbv.uksouth.azurecontainer.io \
+              --dns-name-label sse-user-settings \
               --ports 5000 \
               --registry-login-server SSERecipeContainers.azurecr.io \
               --registry-username ${{ secrets.ACR_USERNAME }} \
