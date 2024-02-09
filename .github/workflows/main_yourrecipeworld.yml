@@ -22,7 +22,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           docker build ./user-settings -t SSERecipeContainers.azurecr.io/sse-user-settings:latest
-          docker push SSERecipeContainers .azurecr.io/sse-user-settings:latest
+          docker push SSERecipeContainers.azurecr.io/sse-user-settings:latest
   
   prepare-aci-deployment:
     runs-on: ubuntu-latest
@@ -41,13 +41,11 @@ jobs:
               --resource-group SSE-recipe \
               --name sse-user-settings \
               --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
-              --dns-name-label sse-user-settings-dns-label \
-              --ports 80 5000 \
+              --dns-name-label sse-user-settings.fte4g2amajbfdtbv.uksouth.azurecontainer.io \
+              --ports 5000 \
               --registry-login-server SSERecipeContainers.azurecr.io \
               --registry-username ${{ secrets.ACR_USERNAME }} \
-              --registry-password ${{ secrets.ACR_PASSWORD }} \
-              --environment-variables 'FLASK_ENV=production' \
-              --command-line "/bin/sh -c 'flask run --host=0.0.0.0 --port=5000'"
+              --registry-password ${{ secrets.ACR_PASSWORD }}
 
   build-web-app:
     runs-on: ubuntu-latest
