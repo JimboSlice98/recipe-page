@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
@@ -19,6 +19,12 @@ def get_user_settings():
         return jsonify(user_settings)
     else:
         return jsonify({"error": "User not found"}), 404
+    
+@app.route("/home", methods=["GET"])
+def home():
+    # return index 1
+    return render_template("index.html")
+
 
 if __name__ == "__main__":
     app.run()

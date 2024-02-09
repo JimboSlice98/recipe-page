@@ -1,73 +1,3 @@
-# # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# # More GitHub Actions for Azure: https://github.com/Azure/actions
-# # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
-
-# name: Build and deploy Python app to Azure Web App - YourRecipeWorld
-
-# on:
-#   push:
-#     branches:
-#       - main
-#   workflow_dispatch:
-
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - uses: actions/checkout@v4
-
-#       - name: Set up Python version
-#         uses: actions/setup-python@v1
-#         with:
-#           python-version: '3.10'
-
-#       - name: Create and start virtual environment
-#         run: |
-#           python -m venv venv
-#           source venv/bin/activate
-      
-#       - name: Install dependencies
-#         run: pip install -r requirements.txt
-        
-#       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
-
-#       - name: Zip artifact for deployment
-#         run: zip release.zip ./* -r
-
-#       - name: Upload artifact for deployment jobs
-#         uses: actions/upload-artifact@v3
-#         with:
-#           name: python-app
-#           path: |
-#             release.zip
-#             !venv/
-
-#   deploy:
-#     runs-on: ubuntu-latest
-#     needs: build
-#     environment:
-#       name: 'Production'
-#       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    
-#     steps:
-#       - name: Download artifact from build job
-#         uses: actions/download-artifact@v3
-#         with:
-#           name: python-app
-
-#       - name: Unzip artifact for deployment
-#         run: unzip release.zip
-
-      
-#       - name: 'Deploy to Azure Web App'
-#         uses: azure/webapps-deploy@v2
-#         id: deploy-to-webapp
-#         with:
-#           app-name: 'YourRecipeWorld'
-#           slot-name: 'Production'
-#           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_432E0FF062964311A6EB42BBF78A9DE7 }}
-
 name: Build and deploy Python app to Azure Web App - YourRecipeWorld
 
 on:
@@ -77,9 +7,51 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-push-docker:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: SSERecipeContainers.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build ./user-settings -t SSERecipeContainers.azurecr.io/sse-user-settings:latest
+          docker push SSERecipeContainers .azurecr.io/sse-user-settings:latest
+  
+  prepare-aci-deployment:
+  runs-on: ubuntu-latest
+  needs: build-and-push-docker
+  steps:
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy to Azure Container Instance
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az container create \
+            --resource-group SSE-recipe \
+            --name sse-user-settings \
+            --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
+            --dns-name-label sse-user-settings-dns-label \
+            --ports 80 5000 \
+            --registry-login-server SSERecipeContainers.azurecr.io \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
+            --environment-variables 'FLASK_ENV=production' \
+            --command-line "/bin/sh -c 'flask run --host=0.0.0.0 --port=5000'"
+
+  build-web-app:
+    runs-on: ubuntu-latest
+    needs: build-and-push-docker
     steps:
       - uses: actions/checkout@v4
 
@@ -96,8 +68,7 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r main-site/api/requirements.txt
-        
-        
+
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Zip artifact for deployment
@@ -112,11 +83,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    
+    needs: build-web-app
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
@@ -126,9 +93,13 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      - name: 'Deploy to Azure Web App'
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
-        id: deploy-to-webapp
         with:
           app-name: 'YourRecipeWorld'
           slot-name: 'Production'

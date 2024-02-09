@@ -1,0 +1,8 @@
+# Ignore all files starting with a dot
+.*
+
+# But keep certain dotfiles and directories you want to track
+!.gitignore
+!.github/
+!.gitlab-ci.yml
+# Add any other dotfiles or directories starting with a dot that you want to keep
