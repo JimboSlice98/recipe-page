@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+import os
 
 app = Flask(__name__)
 
@@ -22,6 +23,11 @@ def get_user_settings():
     
 @app.route("/home", methods=["GET"])
 def home():
+    # temporary
+    return render_template("index.html")
+
+@app.route("/", methods=["GET"])
+def root():
     # temporary
     return render_template("index.html")
 
