@@ -7,9 +7,8 @@ import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, redirect, render_template, request, session,
                    url_for)
-from flask_login import (LoginManager, current_user, login_required,
-                         login_user, logout_user)
-from oauthlib.oauth2 import WebApplicationClient
+# from flask_login import (LoginManager, current_user, login_required,                          login_user, logout_user)
+# from oauthlib.oauth2 import WebApplicationClient
 from requests.exceptions import HTTPError, RequestException
 
 # Configure app.py
@@ -75,7 +74,10 @@ def index():
     user_id = "1"
     
     # URL of the microservice
-    microservice_url = "http://51.11.180.99:5000/get-user-settings"
+    # microservice_url = "http://51.11.180.99:5000/get-user-settings"
+
+    # URL of the microservice / now a CLI (container instance)
+    microservice_url = "http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings"
     
     try:
         # Make a POST request to the microservice
