@@ -57,23 +57,25 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Delete existing Azure Container Instance
-        run: |
-          az container delete --name sse-user-settings --resource-group SSE-recipe --yes || true
         uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az container delete --name sse-user-settings --resource-group SSE-recipe --yes || true
 
       - name: Deploy new Azure Container Instance
-        run: |
-          az container create \
-            --resource-group SSE-recipe \
-            --name sse-user-settings \
-            --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
-            --dns-name-label dnsawdrsseusersettings \
-            --ports 5000 \
-            --registry-login-server SSERecipeContainers.azurecr.io \
-            --registry-username ${{ secrets.ACR_USERNAME }} \
-            --registry-password ${{ secrets.ACR_PASSWORD }} \
-            --environment-variables 'FLASK_ENV=production'
         uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az container create \
+              --resource-group SSE-recipe \
+              --name sse-user-settings \
+              --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
+              --dns-name-label dnsawdrsseusersettings \
+              --ports 5000 \
+              --registry-login-server SSERecipeContainers.azurecr.io \
+              --registry-username ${{ secrets.ACR_USERNAME }} \
+              --registry-password ${{ secrets.ACR_PASSWORD }} \
+              --environment-variables FLASK_ENV=production
 
   build-web-app:
     runs-on: ubuntu-latest
