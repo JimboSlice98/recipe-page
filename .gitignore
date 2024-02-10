@@ -1,8 +1,13 @@
 # Ignore all files starting with a dot
 .*
+.env
+
+# Explicitly ignore .env files everywhere
+**/.env
 
 # But keep certain dotfiles and directories you want to track
 !.gitignore
 !.github/
 !.gitlab-ci.yml
 # Add any other dotfiles or directories starting with a dot that you want to keep
+
