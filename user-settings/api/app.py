@@ -70,7 +70,9 @@ def get_user_settings():
 @app.route("/home", methods=["GET"])
 def home():
     user_id = 1  # The user ID you want to test with
-    response = requests.post('http://localhost:5000/get-user-settings', json={"user_id": str(user_id)})
+    # response = requests.post('http://localhost:5000/get-user-settings', json={"user_id": str(user_id)})
+    response = requests.post('http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings', json={"user_id": str(user_id)})
+    
     data = response.json()
     
     if response.status_code == 200:
