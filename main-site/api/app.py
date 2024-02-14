@@ -14,21 +14,21 @@ from requests.exceptions import HTTPError, RequestException
 # Configure app.py
 app = Flask(__name__)
 
-@app.route("/profile/<user_id>")
-def profile(user_id):
-    # URL of the microservice
-    microservice_url = "http://51.11.180.99:5000/get-user-settings"
+# @app.route("/profile/<user_id>")
+# def profile(user_id):
+#     # URL of the microservice
+#     microservice_url = "http://51.11.180.99:5000/get-user-settings"
 
-    # Make a POST request to the microservice
-    response = requests.post(microservice_url, json={"user_id": user_id})
+#     # Make a POST request to the microservice
+#     response = requests.post(microservice_url, json={"user_id": user_id})
 
-    if response.status_code == 200:
-        # If the request was successful, extract data and pass to the template
-        user_settings = response.json()
-        return render_template("profile.html", user_settings=user_settings)
-    else:
-        # Handle errors or redirect as appropriate
-        return "User settings not found", 404
+#     if response.status_code == 200:
+#         # If the request was successful, extract data and pass to the template
+#         user_settings = response.json()
+#         return render_template("profile.html", user_settings=user_settings)
+#     else:
+#         # Handle errors or redirect as appropriate
+#         return "User settings not found", 404
 
 # Load environment variables
 # load_dotenv()
@@ -168,47 +168,70 @@ def filter_comments_by_blog_ids(blog_ids, comment_data):
             filtered_comments[blog_id] = comment_data[blog_id]
     return filtered_comments
 
+def fetch_data_from_microservice(url, user_id):
+    try:
+        response = requests.get(url, params={"user_id": str(user_id)})
+        response_code = response.status_code
+        
+        if response_code == 200:
+            data = response.json()
+            return response_code, None, data
+        else:
+            return response_code, f"Failed to fetch user settings. Status code: {response_code}", {}
+
+    except requests.exceptions.RequestException as e:
+        return None, str(e), {}
+    except ValueError as e:
+        return None, "Failed to decode JSON from response", {}
+    
+def fetch_user_settings(user_id):
+    url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
+    response_code, error, data = fetch_data_from_microservice(url, user_id)
+    return response_code, error, data
 
 @app.route("/home", methods=["GET"])
 def home():
-    # get the current user_id from parameter (for now)
     user_id = request.args.get('user_id', default=2, type=int)
 
+    response_code, error, data = fetch_user_settings(user_id)
+
+    if error or not data:
+        return render_template("home.html", error=error or "User not found")
+    
+    profile = data[0] if data else {}
+    
+    # Here you would filter blogs and comments based on the user_id
+    # Assuming these functions return the appropriate data 
     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
-    ""
-    # profile = {"user_id" : "user233", "cooking_level" : "amazing", "birthday": "every year" }
-    
-    # user_id = 2  # The user ID you want to fetch settings for
-    # url = 'http://20.108.67.30:5000/get-user-settings'
-    url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
-    
-    try:
-        response = requests.get(url, params={"user_id": str(user_id)})
-        if response.status_code == 200:
-            data = response.json()
-                    
-            if data:
-                profile = data[0]
-                return render_template("home.html", blogs=blogs, comments=comments, profile=profile)
-                # return render_template("index.html", profile=profile)
-            else:            
-                return render_template("home.html", error="User not found")
-        else:
-            return render_template("home.html", error=f"Failed to fetch user settings. Status code: {response.status_code}")
-    
-    except requests.exceptions.RequestException as e:
-        return render_template("home.html", error=str(e))
-    except ValueError as e:
-        return render_template("home.html", error="Failed to decode JSON from response")
 
-    # return index 1
-
+    return render_template("home.html", blogs=blogs, comments=comments, profile=profile)
 
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
 
+@app.route("/profile", methods=["GET"])
+def profile():
+    user_id = request.args.get('user_id', default=None, type=int)
+    
+    # Placeholder for fetching user settings. Replace with actual data retrieval.
+    profile = None if not user_id else {"user_id": user_id, "user_name": "JaneDoe", "cooking_level": "Intermediate", "birthday": "1990-01-01"}
+    
+    if not profile:
+        # No profile found; pass an empty profile object to the template.
+        return render_template("profile.html", profile={}, error="No profile found. Please input your details.")
+    
+    return render_template("profile.html", profile=profile)
+
+# Assuming an update-profile route to handle POST requests
+@app.route("/update-profile", methods=["POST"])
+def update_profile():
+    # Here, you'd retrieve form data and update the profile accordingly.
+    # This function would eventually send data to a microservice to write to database.
+    
+    # For now, redirect back to the profile page as a placeholder.
+    return redirect(url_for('profile'))
 
 #for login page
 @app.route('/login', methods=['GET', 'POST'])

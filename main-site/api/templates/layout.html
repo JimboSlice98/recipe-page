@@ -10,14 +10,15 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">RecipeWorld</a>
+            <a href="/home" class="navbar-brand" href="#">RecipeWorld</a>
             <form class="d-flex" action="/home" method="get">
                 <input class="form-control me-2" type="search" placeholder="Search Usernames" aria-label="Search" name="user_id">
                 <button class="btn btn-outline-success" type="submit">Go</button>
             </form>
+            <!-- Profile Button -->
+            <a href="/profile" class="btn btn-outline-info profile-button">Profile</a>
         </div>
-    </nav>
-    
+    </nav> 
 
 <div class="container mt-4">
     {% block content %}
@@ -26,5 +27,25 @@
 
 <!-- Bootstrap Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        // NOTE THIS IS ALL TEMPORARY UNTIL WE HAVE PYTHON SESSION!
+
+
+        // Extract 'user_id' from the current URL's query parameters
+        const params = new URLSearchParams(window.location.search);
+        const userId = params.get('user_id') || '3'; // Default to '3' if not found
+    
+        // Append 'user_id' to the profile button link
+        const profileButton = document.querySelector('.profile-button');
+        if (profileButton) {
+            const href = profileButton.getAttribute('href');
+            profileButton.setAttribute('href', `${href}?user_id=${userId}`);
+        }
+    
+        // Optionally, update other internal links similarly
+    });
+    </script>
 </body>
 </html>
