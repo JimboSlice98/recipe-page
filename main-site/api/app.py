@@ -107,3 +107,19 @@ def home():
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
+
+
+#for login page
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None  # Initialize error message to None
+    if request.method == 'POST':
+        user_id = request.form['user_id']
+        password = request.form['password']
+        # Hardcoded validation for demonstration purposes
+        if user_id != "admin" or password != "password":
+            error = 'Invalid credentials. Please try again.'
+        else:
+            # Assuming you have a route named 'home' for the home page
+            return redirect(url_for('home'))  # Redirect to home on success
+    return render_template('login.html', error=error)
