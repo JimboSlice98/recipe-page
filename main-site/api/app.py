@@ -97,11 +97,90 @@ def index():
     
     return render_template("index.html", user_settings=user_settings)
 
-# Configure routing
+
+blog_data = {
+    'blog_id1232': {
+        'blog_name': 'Amazing Lasagna Recipe',
+        'user_id': 'user233',
+        'recipe_ingredients': '1 tomato, 2 cups of flour, 3 eggs, 4 cups of cheese, 5 leaves of basil',
+        'recipe_steps': '1. Slice the tomato, 2. Mix flour and eggs, 3. Layer the ingredients, 4. Bake for 45 minutes'
+    },
+    'blog_id1233': {
+        'blog_name': 'Classic Chicken Parmesan',
+        'user_id': 'user234',
+        'recipe_ingredients': '2 chicken breasts, 1 cup breadcrumbs, 1 egg, 2 cups marinara sauce',
+        'recipe_steps': '1. Bread the chicken, 2. Fry until golden, 3. Top with sauce and cheese, 4. Bake to melt cheese'
+    },
+    'blog_id1234': {
+        'blog_name': 'Vegetarian Stir Fry Extravaganza',
+        'user_id': 'user233',
+        'recipe_ingredients': '1 bell pepper, 100g tofu, 2 tbsp soy sauce, 1 cup broccoli',
+        'recipe_steps': '1. Chop vegetables and tofu, 2. Stir fry with soy sauce, 3. Serve over rice'
+    },
+    'blog_id1235': {
+        'blog_name': 'Ultimate Chocolate Cake',
+        'user_id': 'user235',
+        'recipe_ingredients': '200g chocolate, 100g butter, 3 eggs, 150g sugar, 100g flour',
+        'recipe_steps': '1. Melt chocolate and butter, 2. Mix in eggs and sugar, 3. Fold in flour, 4. Bake for 30 minutes'
+    },
+    'blog_id1236': {
+        'blog_name': 'Healthy Kale Smoothie',
+        'user_id': 'user236',
+        'recipe_ingredients': '2 cups kale, 1 banana, 1 apple, 1 cup almond milk',
+        'recipe_steps': '1. Chop fruits, 2. Blend with kale and almond milk until smooth'
+    }
+}
+
+comment_data = {
+    'blog_id1232': {
+        'comment2343243': {'user_id': 'user454', 'comment_string': 'Wow, I love this lasagna recipe!'},
+        'comment2343244': {'user_id': 'user455', 'comment_string': 'This looks absolutely delicious!'}
+    },
+    'blog_id1233': {
+        'comment2343245': {'user_id': 'user233', 'comment_string': 'Chicken Parmesan is my favorite. Thanks for sharing!'},
+        'comment2343246': {'user_id': 'user454', 'comment_string': 'I must try this over the weekend.'}
+    },
+    'blog_id1234': {
+        'comment2343247': {'user_id': 'user455', 'comment_string': 'Love a good stir fry. This vegetarian version sounds great!'},
+        'comment2343248': {'user_id': 'user233', 'comment_string': 'Tofu and soy sauce is a match made in heaven.'}
+    },
+    'blog_id1235': {
+        'comment2343249': {'user_id': 'user455', 'comment_string': 'Chocolate cake is my weakness. Can’t wait to bake this.'},
+        'comment2343250': {'user_id': 'user236', 'comment_string': 'Yum! Saving this recipe for later.'}
+    },
+    'blog_id1236': {
+        'comment2343251': {'user_id': 'user235', 'comment_string': 'Kale and apple is such a refreshing combination!'},
+        'comment2343252': {'user_id': 'user236', 'comment_string': 'Healthy and delicious. Perfect for a quick breakfast.'}
+    }
+}
+
+def filter_blogs_by_user(user_id, blog_data):
+    filtered_blogs = {}
+    blog_ids = []
+    for blog_id, data in blog_data.items():
+        if data['user_id'] == user_id:
+            filtered_blogs[blog_id] = data
+            blog_ids.append(blog_id)
+    return filtered_blogs, blog_ids
+
+def filter_comments_by_blog_ids(blog_ids, comment_data):
+    filtered_comments = {}
+    for blog_id in blog_ids:
+        if blog_id in comment_data:
+            filtered_comments[blog_id] = comment_data[blog_id]
+    return filtered_comments
+
+
 @app.route("/home", methods=["GET"])
 def home():
+    # get the current user_id from a session
+    user_id = 'user233'  
+    blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
+    comments = filter_comments_by_blog_ids(blog_ids, comment_data)
+    ""
+    profile = {"user_id" : "user233", "cooking_level" : "amazing", "birthday": "every year" }
     # return index 1
-    return render_template("index.html")
+    return render_template("home.html", blogs=blogs, comments=comments, profile=profile)
 
 
 @app.errorhandler(404)
