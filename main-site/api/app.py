@@ -116,13 +116,13 @@ blog_data = {
     },
     'blog_id1235': {
         'blog_name': 'Ultimate Chocolate Cake',
-        'user_id': 'user235',
+        'user_id': '1',
         'recipe_ingredients': '200g chocolate, 100g butter, 3 eggs, 150g sugar, 100g flour',
         'recipe_steps': '1. Melt chocolate and butter, 2. Mix in eggs and sugar, 3. Fold in flour, 4. Bake for 30 minutes'
     },
     'blog_id1236': {
         'blog_name': 'Healthy Kale Smoothie',
-        'user_id': '2',
+        'user_id': '1',
         'recipe_ingredients': '2 cups kale, 1 banana, 1 apple, 1 cup almond milk',
         'recipe_steps': '1. Chop fruits, 2. Blend with kale and almond milk until smooth'
     }
@@ -171,14 +171,15 @@ def filter_comments_by_blog_ids(blog_ids, comment_data):
 
 @app.route("/home", methods=["GET"])
 def home():
-    # get the current user_id from a session
-    user_id = 2
+    # get the current user_id from parameter (for now)
+    user_id = request.args.get('user_id', default=2, type=int)
+
     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
     ""
-    profile = {"user_id" : "user233", "cooking_level" : "amazing", "birthday": "every year" }
+    # profile = {"user_id" : "user233", "cooking_level" : "amazing", "birthday": "every year" }
     
-    user_id = 2  # The user ID you want to fetch settings for
+    # user_id = 2  # The user ID you want to fetch settings for
     # url = 'http://20.108.67.30:5000/get-user-settings'
     url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
     
@@ -200,7 +201,6 @@ def home():
         return render_template("home.html", error=str(e))
     except ValueError as e:
         return render_template("home.html", error="Failed to decode JSON from response")
-
 
     # return index 1
 
