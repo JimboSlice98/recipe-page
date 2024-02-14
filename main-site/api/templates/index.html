@@ -1,15 +1,18 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-
-<!-- Display user settings -->
+{% if profile %}
 <div class="card mb-3">
     <div class="card-body">
-        <h5 class="card-title">Welcome, User {{ user_settings.user_id }}</h5>
-        <p class="card-text">Cooking Level: {{ user_settings.cooking_level }}</p>
-        <p class="card-text">Birthday: {{ user_settings.birthday }}</p>
+        <h3 class="card-title">Profile Info</h3>
+        <p class="card-text"><strong>User ID:</strong> {{ profile.user_id }}</p>
+        <p class="card-text"><strong>Cooking Ability:</strong> {{ profile.cooking_level }}</p>
+        <p class="card-text"><strong>Birthday:</strong> {{ profile.birthday }}</p>
     </div>
 </div>
+{% else %}
+<p>Error: {{ error }}</p>
+{% endif %}
 
 <div class="card mb-3">
     <div class="card-body">

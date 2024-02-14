@@ -18,6 +18,7 @@
     <div class="card mb-3">
         <div class="card-body">
             <h5 class="card-title">{{ blog.blog_name }}</h5>
+            <p class="card-text"><strong>User: </strong>{{ blog.user_id }}</p>
             <!-- If there is a date, include it here -->
             <p class="card-text"><strong>Ingredients:</strong> {{ blog.recipe_ingredients }}</p>
             <p class="card-text"><strong>Steps:</strong> {{ blog.recipe_steps }}</p>
@@ -32,6 +33,7 @@
         {% for comment_id, comment in comments[blog_id].items() %}
             <div class="card mb-3 ml-5">
                 <div class="card-body">
+                    <p class="card-text">{{ comment.user_id }}</p>
                     <p class="card-text">{{ comment.comment_string }}</p>
                 </div>
             </div>

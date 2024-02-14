@@ -68,34 +68,31 @@ def profile(user_id):
 # def get_google_provider_config():
 #     return requests.get(GOOGLE_DISCOVERY_URL).json()
 
+
 @app.route("/", methods=["GET"])
 def index():
-    # Hardcoded user ID for demonstration
-    user_id = "1"
-    
-    # URL of the microservice
-    # microservice_url = "http://51.11.180.99:5000/get-user-settings"
-
-    # URL of the microservice / now a CLI (container instance)
-    microservice_url = "http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings"
+    user_id = 2  # The user ID you want to fetch settings for
+    # url = 'http://20.108.67.30:5000/get-user-settings'
+    url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
     
     try:
-        # Make a POST request to the microservice
-        response = requests.post(microservice_url, json={"user_id": user_id}, timeout=5)  # 5 seconds timeout
-        
+        response = requests.get(url, params={"user_id": str(user_id)})
         if response.status_code == 200:
-            # If the request was successful, extract data and pass to the template
-            user_settings = response.json()
+            data = response.json()
+                    
+            if data:
+                profile = data[0]
+                return render_template("index.html", profile=profile)
+            else:            
+                return render_template("index.html", error="User not found")
         else:
-            # Non-200 response, use default values
-            user_settings = {"user_id": user_id, "cooking_level": "Unknown", "birthday": "Unknown"}
+            return render_template("index.html", error=f"Failed to fetch user settings. Status code: {response.status_code}")
     
     except requests.exceptions.RequestException as e:
-        # Catch any requests exceptions (e.g., connection errors, timeout) and use default values
-        print(f"Error contacting microservice: {e}")
-        user_settings = {"user_id": user_id, "cooking_level": "Unknown", "birthday": "Unknown"}
-    
-    return render_template("index.html", user_settings=user_settings)
+        return render_template("index.html", error=str(e))
+    except ValueError as e:
+        return render_template("index.html", error="Failed to decode JSON from response")
+
 
 
 blog_data = {
@@ -107,13 +104,13 @@ blog_data = {
     },
     'blog_id1233': {
         'blog_name': 'Classic Chicken Parmesan',
-        'user_id': 'user234',
+        'user_id': '2',
         'recipe_ingredients': '2 chicken breasts, 1 cup breadcrumbs, 1 egg, 2 cups marinara sauce',
         'recipe_steps': '1. Bread the chicken, 2. Fry until golden, 3. Top with sauce and cheese, 4. Bake to melt cheese'
     },
     'blog_id1234': {
         'blog_name': 'Vegetarian Stir Fry Extravaganza',
-        'user_id': 'user233',
+        'user_id': '2',
         'recipe_ingredients': '1 bell pepper, 100g tofu, 2 tbsp soy sauce, 1 cup broccoli',
         'recipe_steps': '1. Chop vegetables and tofu, 2. Stir fry with soy sauce, 3. Serve over rice'
     },
@@ -125,7 +122,7 @@ blog_data = {
     },
     'blog_id1236': {
         'blog_name': 'Healthy Kale Smoothie',
-        'user_id': 'user236',
+        'user_id': '2',
         'recipe_ingredients': '2 cups kale, 1 banana, 1 apple, 1 cup almond milk',
         'recipe_steps': '1. Chop fruits, 2. Blend with kale and almond milk until smooth'
     }
@@ -133,7 +130,7 @@ blog_data = {
 
 comment_data = {
     'blog_id1232': {
-        'comment2343243': {'user_id': 'user454', 'comment_string': 'Wow, I love this lasagna recipe!'},
+        'comment2343243': {'user_id': '2', 'comment_string': 'Wow, I love this lasagna recipe!'},
         'comment2343244': {'user_id': 'user455', 'comment_string': 'This looks absolutely delicious!'}
     },
     'blog_id1233': {
@@ -155,6 +152,7 @@ comment_data = {
 }
 
 def filter_blogs_by_user(user_id, blog_data):
+    user_id = str(user_id)
     filtered_blogs = {}
     blog_ids = []
     for blog_id, data in blog_data.items():
@@ -174,13 +172,37 @@ def filter_comments_by_blog_ids(blog_ids, comment_data):
 @app.route("/home", methods=["GET"])
 def home():
     # get the current user_id from a session
-    user_id = 'user233'  
+    user_id = 2
     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
     ""
     profile = {"user_id" : "user233", "cooking_level" : "amazing", "birthday": "every year" }
+    
+    user_id = 2  # The user ID you want to fetch settings for
+    # url = 'http://20.108.67.30:5000/get-user-settings'
+    url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
+    
+    try:
+        response = requests.get(url, params={"user_id": str(user_id)})
+        if response.status_code == 200:
+            data = response.json()
+                    
+            if data:
+                profile = data[0]
+                return render_template("home.html", blogs=blogs, comments=comments, profile=profile)
+                # return render_template("index.html", profile=profile)
+            else:            
+                return render_template("home.html", error="User not found")
+        else:
+            return render_template("home.html", error=f"Failed to fetch user settings. Status code: {response.status_code}")
+    
+    except requests.exceptions.RequestException as e:
+        return render_template("home.html", error=str(e))
+    except ValueError as e:
+        return render_template("home.html", error="Failed to decode JSON from response")
+
+
     # return index 1
-    return render_template("home.html", blogs=blogs, comments=comments, profile=profile)
 
 
 @app.errorhandler(404)
