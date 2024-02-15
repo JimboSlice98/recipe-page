@@ -49,7 +49,7 @@ jobs:
             az container create \
               --resource-group SSE-recipe \
               --name sse-user-settings-container \
-              --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
+              --image SSERecipeContainers.azurecr.io/sse-user-settings-container:latest \
               --dns-name-label dnsawdrsseusersettings \
               --ports 5000 \
               --registry-login-server SSERecipeContainers.azurecr.io \
