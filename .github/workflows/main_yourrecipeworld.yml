@@ -23,8 +23,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build ./user-settings -t SSERecipeContainers.azurecr.io/sse-user-settings-container:latest
-          docker push SSERecipeContainers.azurecr.io/sse-user-settings-container:latest
+          docker build ./user-details -t SSERecipeContainers.azurecr.io/sse-user-details-container:latest
+          docker push SSERecipeContainers.azurecr.io/sse-user-details-container:latest
   
   # Delete old contain instance and redeploy
   deploy-to-aci:
@@ -40,7 +40,7 @@ jobs:
         uses: azure/CLI@v1
         with:
           inlineScript: |
-            az container delete --name sse-user-settings-container --resource-group SSE-recipe --yes || true
+            az container delete --name sse-user-details-container --resource-group SSE-recipe --yes || true
 
       - name: Deploy new Azure Container Instance
         uses: azure/CLI@v1
@@ -48,9 +48,9 @@ jobs:
           inlineScript: |
             az container create \
               --resource-group SSE-recipe \
-              --name sse-user-settings-container \
-              --image SSERecipeContainers.azurecr.io/sse-user-settings-container:latest \
-              --dns-name-label dnsawdrsseusersettings \
+              --name sse-user-details-container \
+              --image SSERecipeContainers.azurecr.io/sse-user-details-container:latest \
+              --dns-name-label dnsawdrsseuserdetails \
               --ports 5000 \
               --registry-login-server SSERecipeContainers.azurecr.io \
               --registry-username ${{ secrets.ACR_USERNAME }} \

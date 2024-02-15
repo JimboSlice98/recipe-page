@@ -34,10 +34,10 @@ def get_user_settings():
         cursor = conn.cursor()
         
         if user_id:
-            query = "SELECT * FROM user_settings WHERE user_id = ?"
+            query = "SELECT * FROM user_details WHERE user_id = ?"
             params = (user_id,)
         else:
-            query = "SELECT * FROM user_settings"
+            query = "SELECT * FROM user_details"
             params = ()
 
         cursor.execute(query, params)
