@@ -3,16 +3,11 @@ from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
 import os, requests
 
-load_dotenv()  # This loads the .env file into the environment
+
+load_dotenv()
+
 
 app = Flask(__name__)
-
-# Hardcoded data for demonstration purposes
-users_settings = {
-    "1": {"user_id": "1", "cooking_level": "Expert Chef", "birthday": "1990-01-01"},
-    "2": {"user_id": "2", "cooking_level": "Novice", "birthday": "1992-02-02"},
-    # Add more user settings as needed
-}
 
 
 @app.route("/get-user-settings", methods=["GET"])
@@ -51,31 +46,6 @@ def get_user_settings():
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
-
-
-@app.route("/home", methods=["GET"])
-def home():
-    user_id = 2  # The user ID you want to fetch settings for
-    # url = 'http://20.108.67.30:5000/get-user-settings'
-    url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
-    
-    try:
-        response = requests.get(url, params={"user_id": str(user_id)})
-        if response.status_code == 200:
-            data = response.json()
-                    
-            if data:
-                profile = data[0]
-                return render_template("index.html", profile=profile)
-            else:            
-                return render_template("index.html", error="User not found")
-        else:
-            return render_template("index.html", error=f"Failed to fetch user settings. Status code: {response.status_code}")
-    
-    except requests.exceptions.RequestException as e:
-        return render_template("index.html", error=str(e))
-    except ValueError as e:
-        return render_template("index.html", error="Failed to decode JSON from response")
 
 
 @app.route("/", methods=["GET"])

@@ -7,6 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
+  
+  # Rebuild container image and push to acr
   build-and-push-docker:
     runs-on: ubuntu-latest
     steps:
@@ -21,62 +23,10 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build ./user-settings -t SSERecipeContainers.azurecr.io/sse-user-settings:latest
-          docker push SSERecipeContainers.azurecr.io/sse-user-settings:latest
+          docker build ./user-settings -t SSERecipeContainers.azurecr.io/sse-user-settings-container:latest
+          docker push SSERecipeContainers.azurecr.io/sse-user-settings-container:latest
   
-  # prepare-aci-deployment:
-  #   runs-on: ubuntu-latest
-  #   needs: build-and-push-docker
-  #   steps:
-  #     - name: Login to Azure
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-  #     - name: Deploy to Azure Container Instance
-  #       uses: azure/CLI@v1
-  #       with:
-  #         inlineScript: |
-  #           az container create \
-  #             --resource-group SSE-recipe \
-  #             --name sse-user-settings \
-  #             --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
-  #             --dns-name-label sse-user-settings \
-  #             --ports 5000 \
-  #             --registry-login-server SSERecipeContainers.azurecr.io \
-  #             --registry-username ${{ secrets.ACR_USERNAME }} \
-  #             --registry-password ${{ secrets.ACR_PASSWORD }}
-
-  # deploy-to-aci:
-  #   runs-on: ubuntu-latest
-  #   needs: build-and-push-docker
-  #   steps:
-  #     - name: Login to Azure
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-  #     - name: Delete existing Azure Container Instance
-  #       uses: azure/CLI@v1
-  #       with:
-  #         inlineScript: |
-  #           az container delete --name sse-user-settings --resource-group SSE-recipe --yes || true
-
-  #     - name: Deploy new Azure Container Instance
-  #       uses: azure/CLI@v1
-  #       with:
-  #         inlineScript: |
-  #           az container create \
-  #             --resource-group SSE-recipe \
-  #             --name sse-user-settings \
-  #             --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
-  #             --dns-name-label dnsawdrsseusersettings \
-  #             --ports 5000 \
-  #             --registry-login-server SSERecipeContainers.azurecr.io \
-  #             --registry-username ${{ secrets.ACR_USERNAME }} \
-  #             --registry-password ${{ secrets.ACR_PASSWORD }} \
-  #             --environment-variables FLASK_ENV=production
-
+  # Delete old contain instance and redeploy
   deploy-to-aci:
     runs-on: ubuntu-latest
     needs: build-and-push-docker
@@ -98,7 +48,7 @@ jobs:
           inlineScript: |
             az container create \
               --resource-group SSE-recipe \
-              --name sse-user-settings \
+              --name sse-user-settings-container \
               --image SSERecipeContainers.azurecr.io/sse-user-settings:latest \
               --dns-name-label dnsawdrsseusersettings \
               --ports 5000 \
