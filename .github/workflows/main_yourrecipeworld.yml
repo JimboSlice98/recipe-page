@@ -40,7 +40,7 @@ jobs:
         uses: azure/CLI@v1
         with:
           inlineScript: |
-            az container delete --name sse-user-settings --resource-group SSE-recipe --yes || true
+            az container delete --name sse-user-settings-container --resource-group SSE-recipe --yes || true
 
       - name: Deploy new Azure Container Instance
         uses: azure/CLI@v1
