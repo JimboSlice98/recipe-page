@@ -185,7 +185,9 @@ def fetch_data_from_microservice(url, user_id):
         return None, "Failed to decode JSON from response", {}
     
 def fetch_user_settings(user_id):
-    url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
+    # url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
+    url = 'http://dnsawdrsseuserdetails.uksouth.azurecontainer.io:5000/get-user-settings'
+    
     response_code, error, data = fetch_data_from_microservice(url, user_id)
     return response_code, error, data
 
@@ -193,10 +195,10 @@ def fetch_user_settings(user_id):
 def home():
     user_id = request.args.get('user_id', default=2, type=int)
 
-    response_code, error, data = fetch_user_settings(user_id)
+    response_code, settings_error, data = fetch_user_settings(user_id)
 
-    if error or not data:
-        return render_template("home.html", error=error or "User not found")
+    # if error or not data:
+    #     return render_template("home.html", error=error or "User not found")
     
     profile = data[0] if data else {}
     
@@ -205,7 +207,7 @@ def home():
     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
 
-    return render_template("home.html", blogs=blogs, comments=comments, profile=profile)
+    return render_template("home.html", blogs=blogs, comments=comments, profile=profile, error=settings_error)
 
 @app.errorhandler(404)
 def not_found(e):
