@@ -14,6 +14,14 @@ app = Flask(__name__)
 def get_user_settings():
     user_id = request.args.get("user_id")
 
+    print(
+        f"Driver   = {{{os.environ['SETTING_DB_DRIVER']}}};\n"
+        f"Server   = {os.environ['SETTING_DB_SERVER']};\n"
+        f"Database = {os.environ['SETTING_DB_NAME']};\n"
+        f"UID      = {os.environ['SETTING_DB_USER']};\n"
+        f"PWD      = {os.environ['SETTING_DB_PASS']};\n"
+        )
+
     try:
         conn_str = (
             f"Driver={{{os.environ['SETTING_DB_DRIVER']}}};"
