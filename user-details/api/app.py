@@ -10,8 +10,8 @@ load_dotenv()
 app = Flask(__name__)
 
 
-@app.route("/get-user-settings", methods=["GET"])
-def get_user_settings():
+@app.route("/get-user-details", methods=["GET"])
+def get_user_details():
     user_id = request.args.get("user_id")
 
     print(

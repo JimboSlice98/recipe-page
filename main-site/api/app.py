@@ -73,7 +73,7 @@ app = Flask(__name__)
 def index():
     user_id = 2  # The user ID you want to fetch settings for
     # url = 'http://20.108.67.30:5000/get-user-settings'
-    url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
+    url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
     
     try:
         response = requests.get(url, params={"user_id": str(user_id)})
