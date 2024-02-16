@@ -55,7 +55,7 @@ jobs:
               --registry-login-server SSERecipeContainers.azurecr.io \
               --registry-username ${{ secrets.ACR_USERNAME }} \
               --registry-password ${{ secrets.ACR_PASSWORD }} \
-              --environment-variables FLASK_ENV="production" SETTING_DB_DRIVER="${{ secrets.SETTING_DB_DRIVER }}" SETTING_DB_SERVER="${{ secrets.SETTING_DB_SERVER }}" SETTING_DB_NAME="${{ secrets.SETTING_DB_NAME }}" SETTING_DB_USER="${{ secrets.SETTING_DB_USER }}" SETTING_DB_PASS="${{ secrets.SETTING_DB_PASS }}"
+              --environment-variables FLASK_ENV="production" USER_DETAILS_DRIVER="${{ secrets.USER_DETAILS_DRIVER }}" USER_DETAILS_SERVER="${{ secrets.USER_DETAILS_SERVER }}" USER_DETAILS_DATABASE="${{ secrets.USER_DETAILS_DATABASE }}" USER_DETAILS_USERNAME="${{ secrets.USER_DETAILS_USERNAME }}" USER_DETAILS_PASSWORD="${{ secrets.USER_DETAILS_PASSWORD }}"
 
 
   build-web-app:
