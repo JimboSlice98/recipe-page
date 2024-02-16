@@ -1,4 +1,4 @@
-name: Build and deploy Python app to Azure Web App - YourRecipeWorld
+name: Rebuild and deploy user-details microservice
 
 on:
   push:
