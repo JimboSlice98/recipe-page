@@ -50,7 +50,7 @@ jobs:
               --resource-group SSE-recipe \
               --name sse-user-details-container \
               --image SSERecipeContainers.azurecr.io/sse-user-details-container:latest \
-              --dns-name-label dnsawdrsseuserdetails \
+              --dns-name-label sse-user-details \
               --ports 5000 1433 \
               --registry-login-server SSERecipeContainers.azurecr.io \
               --registry-username ${{ secrets.ACR_USERNAME }} \

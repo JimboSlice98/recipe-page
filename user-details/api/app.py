@@ -43,10 +43,10 @@ def get_user_settings():
         cursor.execute(query, params)
         rows = cursor.fetchall()
         
-        users_settings = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
+        users_details = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
         
-        if users_settings:
-            return jsonify(users_settings)
+        if users_details:
+            return jsonify(users_details)
         else:
             return jsonify({"error": "No data found"}), 404
 
