@@ -93,7 +93,6 @@ def index():
         return render_template("index.html", error="Failed to decode JSON from response")
 
 
-
 blog_data = {
     'blog_id1232': {
         'blog_name': 'Amazing Lasagna Recipe',
@@ -184,8 +183,7 @@ def fetch_data_from_microservice(url, user_id):
         return None, "Failed to decode JSON from response", {}
     
 def fetch_user_settings(user_id):
-    # url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
-    url = 'http://dnsawdrsseuserdetails.uksouth.azurecontainer.io:5000/get-user-settings'
+    url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
     
     response_code, error, data = fetch_data_from_microservice(url, user_id)
     return response_code, error, data
