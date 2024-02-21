@@ -34,7 +34,7 @@ WORKDIR /app
 COPY . .
 
 # Install any needed packages specified in api/requirements.txt
-RUN pip install --no-cache-dir -r api/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
