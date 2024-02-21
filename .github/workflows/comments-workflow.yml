@@ -1,4 +1,4 @@
-name: Rebuild and deploy user-details microservice
+name: Rebuild and deploy comments microservice
 
 on:
   push:
