@@ -246,3 +246,14 @@ def login():
             # Assuming you have a route named 'home' for the home page
             return redirect(url_for('home'))  # Redirect to home on success
     return render_template('login.html', error=error)
+
+
+#nma just added for register page
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # Here you can handle the form data after validation.
+        # For this example, we'll just return a simple message.
+        # In a real application, you should handle the data properly.
+        return 'Registration successful'
+    return render_template('register.html')
