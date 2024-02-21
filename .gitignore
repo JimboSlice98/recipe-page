@@ -3,9 +3,10 @@
 .env
 __pycache__/
 
-# Explicitly ignore .env files everywhere
+# Explicitly ignore .env, pycache and init files everywhere
 **/.env
 **/__pycache__/
+**/__init__.py
 
 # But keep certain dotfiles and directories you want to track
 !.gitignore
