@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     software-properties-common \
     unixodbc-dev
+    screen
 
 # Add Microsoft repository for SQL Server command-line tools
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
