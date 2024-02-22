@@ -117,12 +117,12 @@ except Exception as e:
 #     return images_metadata
 
 def fetch_images_metadata(user_id, blog_id):
-    # Connect to the table
-    table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
-    images_metadata = {blog_id: []} # Initialize with the specific blog_id
-    # images_metadata = []
-
+    
     try:
+        # Connect to the table
+        table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
+        images_metadata = {blog_id: []} # Initialize with the specific blog_id
+        # images_metadata = []
         # Create the query filter for a single blog_id
         query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'\n"
         entities = table_client.query_entities(query_filter)
@@ -204,7 +204,7 @@ def generate_blob_urls_by_blog_id(images_metadata):
             print("metadata was okay")
         else:
             print("meta data was bad")
-            
+
     return blob_urls_by_blog_id
 
 def generate_unique_filename(original_filename, user_id=1, blog_id=1):
