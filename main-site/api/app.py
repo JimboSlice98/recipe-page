@@ -33,8 +33,8 @@ except:
 try:
     table_service_client = TableServiceClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING)
     table_client = table_service_client.get_table_client(table_name=IMAGE_STORAGE_TABLE_NAME)
-except: 
-    print("\n\n\nWasn't able to connect to image table\n\n\n")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
 
 # def fetch_all_images_metadata(user_id):
 #     # Connect to the table
@@ -182,22 +182,29 @@ def fetch_images_metadata(user_id, blog_id):
 def generate_blob_urls_by_blog_id(images_metadata):
     blob_urls_by_blog_id = {}
 
-    for blog_id, metadata_list in images_metadata.items():
-        blob_urls_by_blog_id[blog_id] = []
+    try:
+        for blog_id, metadata_list in images_metadata.items():
+            blob_urls_by_blog_id[blog_id] = []
 
-        for metadata in metadata_list:
-            extension = metadata['Extension']
-            unique_id = metadata['RowKey']
-            user_id = metadata['PartitionKey']
+            for metadata in metadata_list:
+                extension = metadata['Extension']
+                unique_id = metadata['RowKey']
+                user_id = metadata['PartitionKey']
 
-            # Construct the blob name and URL
-            filename = f"{unique_id}_{user_id}{extension}{blog_id}"
-            blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
-            # added blob_url[blog_id] instead of blob_url for now 
-            print("gen blob url: addded to the key: ", blog_id, "and the value: ", blob_url)
-            blob_urls_by_blog_id[blog_id].append(blob_url)
-            print(f"Blob URL for blog {blog_id}: {blob_url}")
-    print("here is the url we passed in!!!", blob_urls_by_blog_id)
+                # Construct the blob name and URL
+                filename = f"{unique_id}_{user_id}{extension}{blog_id}"
+                blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
+                # added blob_url[blog_id] instead of blob_url for now 
+                print("gen blob url: addded to the key: ", blog_id, "and the value: ", blob_url)
+                blob_urls_by_blog_id[blog_id].append(blob_url)
+                print(f"Blob URL for blog {blog_id}: {blob_url}")
+        print("here is the url we passed in!!!", blob_urls_by_blog_id)
+    except:
+        if metadata:
+            print("metadata was okay")
+        else:
+            print("meta data was bad")
+            
     return blob_urls_by_blog_id
 
 def generate_unique_filename(original_filename, user_id=1, blog_id=1):
