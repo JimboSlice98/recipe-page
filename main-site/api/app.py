@@ -215,9 +215,9 @@ def generate_unique_filename(original_filename, user_id=1, blog_id=1):
 
 # Function to retrieve entities for a user_id and a list of blog_ids
 def get_image_metadata(storage_connection_string, user_id, unique_id):
-    table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name="ImageMetadata")
-
+    
     try:
+        table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name="ImageMetadata")
         entity = table_client.get_entity(partition_key=str(user_id), row_key=unique_id)
         return entity
     except Exception as e:
@@ -229,14 +229,17 @@ def upload_image_to_blob(container_name, blob_name, upload_file_path):
     """
     Uploads a local file to Azure Blob Storage.
     """
-    blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
-    
-    # Create the container if it doesn't exist
-    container_client = blob_service_client.get_container_client(container_name)
     try:
-        container_client.create_container()
-    except Exception as e:
-        print(f"Container already exists or another error occurred: {e}")
+        blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
+        
+        # Create the container if it doesn't exist
+        container_client = blob_service_client.get_container_client(container_name)
+        try:
+            container_client.create_container()
+        except Exception as e:
+            print(f"Container already exists or another error occurred: {e}")
+    except:
+        print("couldnt connect to the image storage")
 
     # Create a blob client using the local file name as the name for the blob
     blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
@@ -251,18 +254,21 @@ def get_blob_sas_url(container_name, blob_name):
     """
     Generates a SAS URL for accessing a blob.
     """
-    blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
-    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
 
-    sas_token = generate_blob_sas(account_name=IMAGE_STORAGE_ACCOUNT_NAME,
-                                  container_name=container_name,
-                                  blob_name=blob_name,
-                                  account_key=blob_service_client.credential.account_key,
-                                  permission=BlobSasPermissions(read=True),
-                                  expiry=datetime.utcnow() + timedelta(hours=1))  # Token valid for 1 hour
+        sas_token = generate_blob_sas(account_name=IMAGE_STORAGE_ACCOUNT_NAME,
+                                    container_name=container_name,
+                                    blob_name=blob_name,
+                                    account_key=blob_service_client.credential.account_key,
+                                    permission=BlobSasPermissions(read=True),
+                                    expiry=datetime.utcnow() + timedelta(hours=1))  # Token valid for 1 hour
 
-    blob_url_with_sas = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{container_name}/{blob_name}?{sas_token}"
-    return blob_url_with_sas
+        blob_url_with_sas = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{container_name}/{blob_name}?{sas_token}"
+        return blob_url_with_sas
+    except:
+        return "failed"
 
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB upload limit
@@ -311,22 +317,30 @@ def upload_image():
         # Retrieve user_id and blog_id from form data
         user_id = request.form.get('user_id')
         blog_id = request.form.get('blog_id')
+        if not user_id:
+            user_id = 1
+        if not blog_id:
+            blog_id = 1
+        
         unique_filename, date = generate_unique_filename(original_filename, user_id, blog_id)
 
         #### WILL NEED TO REMOVE #####
         print(f"unique_filename: {unique_filename}")  # For debugging purposes
-        
-        # Get a blob client and upload the file stream directly to Azure Blob Storage
-        blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
-        blob_client = blob_service_client.get_blob_client(container=IMAGE_STORAGE_CONTAINER_NAME, blob=unique_filename)
-        
-        # Upload the file stream to Azure Blob Storage
-        blob_client.upload_blob(file, blob_type="BlockBlob", overwrite=True)
+        try:
+            # Get a blob client and upload the file stream directly to Azure Blob Storage
+            blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
+            blob_client = blob_service_client.get_blob_client(container=IMAGE_STORAGE_CONTAINER_NAME, blob=unique_filename)
+            
+            # Upload the file stream to Azure Blob Storage
+            blob_client.upload_blob(file, blob_type="BlockBlob", overwrite=True)
 
-        # Insert metadata into Azure Table Storage
-        insert_image_metadata(IMAGE_STORAGE_CONNECTION_STRING, user_id, blog_id, original_filename, date)
+            # Insert metadata into Azure Table Storage
+            insert_image_metadata(IMAGE_STORAGE_CONNECTION_STRING, user_id, blog_id, original_filename, date)
 
-        return redirect(url_for('home'))
+            return redirect(url_for('home'))
+        except:
+            print("failed")
+            return redirect(url_for('404'))
         # return redirect(url_for('show_uploaded_image', filename=unique_filename))
 
 @app.route('/show-uploaded-image/<filename>')
@@ -349,7 +363,11 @@ def insert_image_metadata(storage_connection_string, user_id, blog_id, original_
     filename = f"{unique_id}_{user_id if user_id else 'guest'}{blog_id}{extension}"
 
     # Create a table client
-    table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name=IMAGE_STORAGE_TABLE_NAME)
+    try:
+        table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name=IMAGE_STORAGE_TABLE_NAME)
+    except:
+        print("failed to connect: insert_image_metadata")
+        return redirect(url_for('404'))
 
     # Define the entity to insert
     entity = {
@@ -529,6 +547,10 @@ def home():
 
 
 @app.errorhandler(404)
+def not_found(e):
+    return render_template("404.html"), 404
+
+@app.route("/404", methods=["GET"])
 def not_found(e):
     return render_template("404.html"), 404
 
