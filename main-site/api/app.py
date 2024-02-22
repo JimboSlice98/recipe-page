@@ -319,8 +319,8 @@ def upload_image():
         # Insert metadata into Azure Table Storage
         insert_image_metadata(IMAGE_STORAGE_CONNECTION_STRING, user_id, blog_id, original_filename, date)
 
-
-        return redirect(url_for('show_uploaded_image', filename=unique_filename))
+        return redirect(url_for('home'))
+        # return redirect(url_for('show_uploaded_image', filename=unique_filename))
 
 @app.route('/show-uploaded-image/<filename>')
 def show_uploaded_image(filename):
