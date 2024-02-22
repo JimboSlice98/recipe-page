@@ -21,14 +21,20 @@ from azure.data.tables import TableServiceClient, TableClient
 app = Flask(__name__)
 
 # image storage connection constants
-IMAGE_STORAGE_CONNECTION_STRING = os.environ.get('IMAGE_STORAGE_CONNECTION_STRING')
-IMAGE_STORAGE_CONTAINER_NAME = os.environ.get('IMAGE_STORAGE_CONTAINER_NAME')
-IMAGE_STORAGE_ACCOUNT_NAME = os.environ.get('IMAGE_STORAGE_ACCOUNT_NAME')
-IMAGE_STORAGE_TABLE_NAME = os.environ.get('IMAGE_STORAGE_TABLE_NAME')
+try:
+    IMAGE_STORAGE_CONNECTION_STRING = os.environ.get('IMAGE_STORAGE_CONNECTION_STRING')
+    IMAGE_STORAGE_CONTAINER_NAME = os.environ.get('IMAGE_STORAGE_CONTAINER_NAME')
+    IMAGE_STORAGE_ACCOUNT_NAME = os.environ.get('IMAGE_STORAGE_ACCOUNT_NAME')
+    IMAGE_STORAGE_TABLE_NAME = os.environ.get('IMAGE_STORAGE_TABLE_NAME')
+except:
+    print("didnt get image_storage varaibles")
 
 # Initialize the Table Service Client
-table_service_client = TableServiceClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING)
-table_client = table_service_client.get_table_client(table_name=IMAGE_STORAGE_TABLE_NAME)
+try:
+    table_service_client = TableServiceClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING)
+    table_client = table_service_client.get_table_client(table_name=IMAGE_STORAGE_TABLE_NAME)
+except: 
+    print("Wasn't able to connect to image table")
 
 # Function to retrieve entities for a user_id and a list of blog_ids
 def get_image_metadata(storage_connection_string, user_id, unique_id):
