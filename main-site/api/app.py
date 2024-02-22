@@ -27,14 +27,61 @@ try:
     IMAGE_STORAGE_ACCOUNT_NAME = os.environ.get('IMAGE_STORAGE_ACCOUNT_NAME')
     IMAGE_STORAGE_TABLE_NAME = os.environ.get('IMAGE_STORAGE_TABLE_NAME')
 except:
-    print("didnt get image_storage varaibles")
+    print("\n\n\ndidnt get image_storage varaibles\n\n\n")
 
 # Initialize the Table Service Client
 try:
     table_service_client = TableServiceClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING)
     table_client = table_service_client.get_table_client(table_name=IMAGE_STORAGE_TABLE_NAME)
 except: 
-    print("Wasn't able to connect to image table")
+    print("\n\n\nWasn't able to connect to image table\n\n\n")
+
+def fetch_images_metadata(user_id, blog_id):
+    # Connect to the table
+    table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
+    images_metadata = []
+
+    try:
+        # Query to filter by user_id (ParitionKey) and blog_id (BlogId)
+        query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'"
+        entities = table_client.query_entities(query_filter)
+
+        for entity in entities:
+            images_metadata.append(entity)
+        return images_metadata
+    except Exception as e:
+        print(f"Error fetching entities: {e}")
+        return None
+
+
+def generate_blob_urls_from_metadata(images_metadata):
+    blob_urls = []
+
+    for metadata in images_metadata:
+        # Reconstruct the unique filename using the stored metadata
+        extension = metadata['Extension']
+        unique_id = metadata['RowKey']
+        user_id = metadata['PartitionKey']
+        blog_id = metadata['BlogId']
+        # original_filename = metadata['OriginalFilename']
+
+        # RowKey is datetime - unique part
+        # date_userid-extension-blog_id       
+        filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
+
+        # Construct the full blob URL
+        blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
+        blob_urls.append(blob_url)
+        print(f"Blob URL: {blob_url}")  # For debugging purposes
+
+    return blob_urls
+
+
+def generate_unique_filename(original_filename, user_id=1, blog_id=1):
+    extension = os.path.splitext(original_filename)[1]
+    unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
+    return filename
 
 # Function to retrieve entities for a user_id and a list of blog_ids
 def get_image_metadata(storage_connection_string, user_id, unique_id):
@@ -90,6 +137,17 @@ def get_blob_sas_url(container_name, blob_name):
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB upload limit
 
+@app.route('/display-images')
+def display_images():
+    user_id = request.args.get('user_id')
+    blog_id = request.args.get('blog_id')  # Assuming a single blog_id is used for this request
+
+    images_metadata = fetch_images_metadata(user_id, blog_id)
+    blob_urls = generate_blob_urls_from_metadata(images_metadata)
+
+    # Render a template to display images
+    return render_template('display_images.html', blob_urls=blob_urls)
+
 @app.route('/upload', methods=['GET'])
 def upload_form():
     # Just render the upload form template, no need to generate a SAS token
@@ -111,6 +169,9 @@ def upload_image():
         user_id = request.form.get('user_id')
         blog_id = request.form.get('blog_id')
         unique_filename = generate_unique_filename(original_filename, user_id, blog_id)
+
+        #### WILL NEED TO REMOVE #####
+        print(f"unique_filename: {unique_filename}")  # For debugging purposes
         
         # Get a blob client and upload the file stream directly to Azure Blob Storage
         blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
@@ -136,6 +197,7 @@ def generate_unique_filename(original_filename, user_id=1, blog_id=1):
     filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
     return filename
 
+   
 def insert_image_metadata(storage_connection_string, user_id, blog_id, original_filename):
     # Generate unique parts of the filename
     extension = os.path.splitext(original_filename)[1]

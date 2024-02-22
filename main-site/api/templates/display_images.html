@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Images Gallery</title>
+</head>
+<body>
+    <h1>Images Gallery</h1>
+    <div>
+        {% for url in blob_urls %}
+            <img src="{{ url }}" style="height: 100px;"> <!-- Adjust styling as needed -->
+        {% endfor %}
+    </div>
+</body>
+</html>
