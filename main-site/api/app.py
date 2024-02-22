@@ -117,11 +117,11 @@ except Exception as e:
 #     return images_metadata
 
 def fetch_images_metadata(user_id, blog_id):
-    
+    images_metadata = {blog_id: []} 
     try:
         # Connect to the table
         table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
-        images_metadata = {blog_id: []} # Initialize with the specific blog_id
+        # Initialize with the specific blog_id
         # images_metadata = []
         # Create the query filter for a single blog_id
         query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'\n"
