@@ -157,8 +157,7 @@ def insert_image_metadata(storage_connection_string, user_id, blog_id, original_
 @app.route("/", methods=["GET"])
 def index():
     user_id = 2  # The user ID you want to fetch settings for
-    # url = 'http://20.108.67.30:5000/get-user-settings'
-    url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
+    url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
     
     try:
         response = requests.get(url, params={"user_id": str(user_id)})
@@ -177,7 +176,6 @@ def index():
         return render_template("index.html", error=str(e))
     except ValueError as e:
         return render_template("index.html", error="Failed to decode JSON from response")
-
 
 
 blog_data = {
@@ -270,8 +268,7 @@ def fetch_data_from_microservice(url, user_id):
         return None, "Failed to decode JSON from response", {}
     
 def fetch_user_settings(user_id):
-    # url = 'http://dnsawdrsseusersettings.uksouth.azurecontainer.io:5000/get-user-settings'
-    url = 'http://dnsawdrsseuserdetails.uksouth.azurecontainer.io:5000/get-user-settings'
+    url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
     
     response_code, error, data = fetch_data_from_microservice(url, user_id)
     return response_code, error, data
@@ -334,3 +331,14 @@ def login():
             # Assuming you have a route named 'home' for the home page
             return redirect(url_for('home'))  # Redirect to home on success
     return render_template('login.html', error=error)
+
+
+#nma just added for register page
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # Here you can handle the form data after validation.
+        # For this example, we'll just return a simple message.
+        # In a real application, you should handle the data properly.
+        return 'Registration successful'
+    return render_template('register.html')

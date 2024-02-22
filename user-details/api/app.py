@@ -10,25 +10,25 @@ load_dotenv()
 app = Flask(__name__)
 
 
-@app.route("/get-user-settings", methods=["GET"])
-def get_user_settings():
+@app.route("/get-user-details", methods=["GET"])
+def get_user_details():
     user_id = request.args.get("user_id")
 
     print(
-        f"Driver   = {{{os.environ['SETTING_DB_DRIVER']}}};\n"
-        f"Server   = {os.environ['SETTING_DB_SERVER']};\n"
-        f"Database = {os.environ['SETTING_DB_NAME']};\n"
-        f"UID      = {os.environ['SETTING_DB_USER']};\n"
-        f"PWD      = {os.environ['SETTING_DB_PASS']};\n"
+        f"Driver   = {{{os.environ['USER_DETAILS_DRIVER']}}};\n"
+        f"Server   = {os.environ['USER_DETAILS_SERVER']};\n"
+        f"Database = {os.environ['USER_DETAILS_DATABASE']};\n"
+        f"UID      = {os.environ['USER_DETAILS_USERNAME']};\n"
+        f"PWD      = {os.environ['USER_DETAILS_PASSWORD']};\n"
         )
 
     try:
         conn_str = (
-            f"Driver={{{os.environ['SETTING_DB_DRIVER']}}};"
-            f"Server={os.environ['SETTING_DB_SERVER']};"
-            f"Database={os.environ['SETTING_DB_NAME']};"
-            f"UID={os.environ['SETTING_DB_USER']};"
-            f"PWD={os.environ['SETTING_DB_PASS']};"
+            f"Driver={{{os.environ['USER_DETAILS_DRIVER']}}};"
+            f"Server={os.environ['USER_DETAILS_SERVER']};"
+            f"Database={os.environ['USER_DETAILS_DATABASE']};"
+            f"UID={os.environ['USER_DETAILS_USERNAME']};"
+            f"PWD={os.environ['USER_DETAILS_PASSWORD']};"
         )
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
@@ -43,10 +43,10 @@ def get_user_settings():
         cursor.execute(query, params)
         rows = cursor.fetchall()
         
-        users_settings = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
+        users_details = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
         
-        if users_settings:
-            return jsonify(users_settings)
+        if users_details:
+            return jsonify(users_details)
         else:
             return jsonify({"error": "No data found"}), 404
 
@@ -63,4 +63,3 @@ def root():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
-

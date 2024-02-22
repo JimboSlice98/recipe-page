@@ -15,20 +15,20 @@ def get_user_details():
     user_id = request.args.get("user_id")
 
     print(
-        f"Driver   = {{{os.environ['COMMENTS_DRIVER']}}};\n"
-        f"Server   = {os.environ['COMMENTS_SERVER']};\n"
-        f"Database = {os.environ['COMMENTS_DATABASE']};\n"
-        f"UID      = {os.environ['COMMENTS_USERNAME']};\n"
-        f"PWD      = {os.environ['COMMENTS_PASSWORD']};\n"
+        f"Driver   = {{{os.environ['RECIPES_DRIVER']}}};\n"
+        f"Server   = {os.environ['RECIPES_SERVER']};\n"
+        f"Database = {os.environ['RECIPES_DATABASE']};\n"
+        f"UID      = {os.environ['RECIPES_USERNAME']};\n"
+        f"PWD      = {os.environ['RECIPES_PASSWORD']};\n"
         )
 
     try:
         conn_str = (
-            f"Driver={{{os.environ['COMMENTS_DRIVER']}}};"
-            f"Server={os.environ['COMMENTS_SERVER']};"
-            f"Database={os.environ['COMMENTS_DATABASE']};"
-            f"UID={os.environ['COMMENTS_USERNAME']};"
-            f"PWD={os.environ['COMMENTS_PASSWORD']};"
+            f"Driver={{{os.environ['RECIPES_DRIVER']}}};"
+            f"Server={os.environ['RECIPES_SERVER']};"
+            f"Database={os.environ['RECIPES_DATABASE']};"
+            f"UID={os.environ['RECIPES_USERNAME']};"
+            f"PWD={os.environ['RECIPES_PASSWORD']};"
         )
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
