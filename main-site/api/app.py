@@ -11,63 +11,148 @@ from flask import (Flask, abort, redirect, render_template, request, session,
 # from oauthlib.oauth2 import WebApplicationClient
 from requests.exceptions import HTTPError, RequestException
 
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
+from datetime import datetime, timedelta
+from werkzeug.utils import secure_filename
+from azure.data.tables import TableServiceClient, TableClient
+
 # Configure app.py
 app = Flask(__name__)
 
-# @app.route("/profile/<user_id>")
-# def profile(user_id):
-#     # URL of the microservice
-#     microservice_url = "http://51.11.180.99:5000/get-user-settings"
+# image storage connection constants
+IMAGE_STORAGE_CONNECTION_STRING = os.environ.get('IMAGE_STORAGE_CONNECTION_STRING')
+IMAGE_STORAGE_CONTAINER_NAME = os.environ.get('IMAGE_STORAGE_CONTAINER_NAME')
+IMAGE_STORAGE_ACCOUNT_NAME = os.environ.get('IMAGE_STORAGE_ACCOUNT_NAME')
+IMAGE_STORAGE_TABLE_NAME = os.environ.get('IMAGE_STORAGE_TABLE_NAME')
 
-#     # Make a POST request to the microservice
-#     response = requests.post(microservice_url, json={"user_id": user_id})
+# Initialize the Table Service Client
+table_service_client = TableServiceClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING)
+table_client = table_service_client.get_table_client(table_name=IMAGE_STORAGE_TABLE_NAME)
 
-#     if response.status_code == 200:
-#         # If the request was successful, extract data and pass to the template
-#         user_settings = response.json()
-#         return render_template("profile.html", user_settings=user_settings)
-#     else:
-#         # Handle errors or redirect as appropriate
-#         return "User settings not found", 404
+# Function to retrieve entities for a user_id and a list of blog_ids
+def get_image_metadata(storage_connection_string, user_id, unique_id):
+    table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name="ImageMetadata")
 
-# Load environment variables
-# load_dotenv()
-
-# # Get app's secret key so Flask_login can manipulate the session
-# app.config['SECRET_KEY'] = os.environ.get("SECRETKEY")
-
-# # Configure Flask login
-# login_manager = LoginManager(app)
-# login_manager.init_app(app)
-# login_manager.login_view = "login"
-
-# # Set cookie expiration
-# app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=31)
-
-# # Configure Google OAuth
-# # to work on MacOS, turn off AirPlay receiver and do $ flask run --host=0.0.0.0
-# # will only work on localhost
-# GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
-# GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-# GOOGLE_DISCOVERY_URL = (
-#     "https://accounts.google.com/.well-known/openid-configuration")
+    try:
+        entity = table_client.get_entity(partition_key=str(user_id), row_key=unique_id)
+        return entity
+    except Exception as e:
+        print(f"Entity could not be found: {e}")
+        return None
 
 
-# # Set up OAuth 2 client
-# client = WebApplicationClient(GOOGLE_CLIENT_ID)
+def upload_image_to_blob(container_name, blob_name, upload_file_path):
+    """
+    Uploads a local file to Azure Blob Storage.
+    """
+    blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
+    
+    # Create the container if it doesn't exist
+    container_client = blob_service_client.get_container_client(container_name)
+    try:
+        container_client.create_container()
+    except Exception as e:
+        print(f"Container already exists or another error occurred: {e}")
+
+    # Create a blob client using the local file name as the name for the blob
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+
+    # Upload the local file to blob storage
+    with open(upload_file_path, "rb") as data:
+        blob_client.upload_blob(data, overwrite=True)
+    
+    print(f"File {upload_file_path} uploaded to {container_name}/{blob_name}")
+
+def get_blob_sas_url(container_name, blob_name):
+    """
+    Generates a SAS URL for accessing a blob.
+    """
+    blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+
+    sas_token = generate_blob_sas(account_name=IMAGE_STORAGE_ACCOUNT_NAME,
+                                  container_name=container_name,
+                                  blob_name=blob_name,
+                                  account_key=blob_service_client.credential.account_key,
+                                  permission=BlobSasPermissions(read=True),
+                                  expiry=datetime.utcnow() + timedelta(hours=1))  # Token valid for 1 hour
+
+    blob_url_with_sas = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{container_name}/{blob_name}?{sas_token}"
+    return blob_url_with_sas
+
+app.config['UPLOAD_FOLDER'] = 'static/images'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB upload limit
+
+@app.route('/upload', methods=['GET'])
+def upload_form():
+    # Just render the upload form template, no need to generate a SAS token
+    # The upload_form.html does the post request to below
+    return render_template('upload_form.html')
+
+@app.route('/upload-image', methods=['POST'])
+def upload_image():
+    if 'image' not in request.files:
+        return redirect(request.url)
+    file = request.files['image']
+    if file.filename == '':
+        return "No selected file", 400
+        # return redirect(request.url)
+    if file:
+        original_filename = file.filename
+        
+        # Retrieve user_id and blog_id from form data
+        user_id = request.form.get('user_id')
+        blog_id = request.form.get('blog_id')
+        unique_filename = generate_unique_filename(original_filename, user_id, blog_id)
+        
+        # Get a blob client and upload the file stream directly to Azure Blob Storage
+        blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
+        blob_client = blob_service_client.get_blob_client(container=IMAGE_STORAGE_CONTAINER_NAME, blob=unique_filename)
+        
+        # Upload the file stream to Azure Blob Storage
+        blob_client.upload_blob(file, blob_type="BlockBlob", overwrite=True)
+
+        # Insert metadata into Azure Table Storage
+        insert_image_metadata(IMAGE_STORAGE_CONNECTION_STRING, user_id, blog_id, original_filename)
 
 
-# # Define user_loader callback to load user obj from user id in session
-# @login_manager.user_loader
-# def load_user(user_id):
-#     return User(id=user_id, username=get_username(user_id))
+        return redirect(url_for('show_uploaded_image', filename=unique_filename))
 
+@app.route('/show-uploaded-image/<filename>')
+def show_uploaded_image(filename):
+    image_url = get_blob_sas_url(IMAGE_STORAGE_CONTAINER_NAME, filename)
+    return render_template("show_image.html", image_url=image_url)
 
-# # Retrieve Google's provider config
-# # ADD ERROR HADNLING TO API CALL LATER
-# def get_google_provider_config():
-#     return requests.get(GOOGLE_DISCOVERY_URL).json()
+def generate_unique_filename(original_filename, user_id=1, blog_id=1):
+    extension = os.path.splitext(original_filename)[1]
+    unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
+    return filename
 
+def insert_image_metadata(storage_connection_string, user_id, blog_id, original_filename):
+    # Generate unique parts of the filename
+    extension = os.path.splitext(original_filename)[1]
+    unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = f"{unique_id}_{user_id if user_id else 'guest'}{blog_id}{extension}"
+
+    # Create a table client
+    table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name=IMAGE_STORAGE_TABLE_NAME)
+
+    # Define the entity to insert
+    entity = {
+        "PartitionKey": str(user_id),
+        "RowKey": unique_id,
+        "BlogId": str(blog_id),
+        "OriginalFilename": original_filename,
+        "Extension": extension,
+        "Timestamp": datetime.now()
+    }
+
+    # Insert the entity
+    table_client.create_entity(entity=entity)
+
+    return filename
 
 @app.route("/", methods=["GET"])
 def index():

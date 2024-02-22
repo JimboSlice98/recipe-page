@@ -1,0 +1,54 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Image to Blob Storage</title>
+</head>
+<body>
+    <h1>Upload Image to Azure Blob Storage</h1>
+    <input type="file" id="fileInput" name="image" required>
+    <input type="hidden" id="sasUrl" value="{{ sas_url }}">
+    <button onclick="uploadFile()">Upload</button>
+
+    <script>
+        function uploadFile() {
+            var file = document.getElementById('fileInput').files[0];
+            var sasUrl = document.getElementById('sasUrl').value;
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open("PUT", sasUrl, true);
+            xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob');
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.onload = function () {
+                if (xhr.status === 201) {
+                    console.log('Upload successful');
+                    // Optionally, notify your server that the upload is complete
+                } else {
+                    console.error('Upload failed');
+                }
+            };
+            xhr.send(file);
+        }
+    </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Image to Blob Storage</title>
+</head>
+<body>
+    <h1>Upload Image to Azure Blob Storage</h1>
+    <form action="{{ url_for('upload_image') }}" method="post" enctype="multipart/form-data">
+        <!-- Hidden fields for user_id and blog_id -->
+        <!-- THIS IS TEMPORARY UNTIL WE HAVE USER_ID AND BLOG_ID PASSED IN! -->
+        <input type="hidden" name="user_id" value="2"> <!-- Example value; replace as needed -->
+        <input type="hidden" name="blog_id" value="1"> <!-- Example value; replace as needed -->
+        
+        <input type="file" id="fileInput" name="image" required>
+        <input type="submit" value="Upload">
+    </form>
+</body>
+</html>
+
