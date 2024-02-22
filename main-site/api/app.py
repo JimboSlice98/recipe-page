@@ -36,25 +36,107 @@ try:
 except: 
     print("\n\n\nWasn't able to connect to image table\n\n\n")
 
-def fetch_all_images_metadata(user_id):
+# def fetch_all_images_metadata(user_id):
+#     # Connect to the table
+#     table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
+#     images_metadata = {}
+
+#     try:
+#         # Query to filter by user_id (PartitionKey)
+#         query_filter = f"PartitionKey eq '{user_id}'"
+#         entities = table_client.query_entities(query_filter)
+
+#         for entity in entities:
+#             blog_id = entity['BlogId']
+#             if blog_id not in images_metadata:
+#                 images_metadata[blog_id] = []
+#             images_metadata[blog_id].append(entity)
+#         return images_metadata
+#     except Exception as e:
+#         print(f"Error fetching entities: {e}")
+#         return None
+    
+# def fetch_images_metadata(user_id, blog_id):
+#     # Connect to the table
+#     table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
+#     images_metadata = []
+
+#     try:
+#         # Query to filter by user_id (ParitionKey) and blog_id (BlogId)
+#         query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'"
+#         entities = table_client.query_entities(query_filter)
+
+#         for entity in entities:
+#             images_metadata.append(entity)
+#         return images_metadata
+#     except Exception as e:
+#         print(f"Error fetching entities: {e}")
+#         return None
+
+
+# def fetch_all_images_metadata(user_id):
+#     # Connect to the table
+#     table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
+#     images_metadata = {}
+
+#     try:
+#         # Query to filter by user_id (PartitionKey)
+#         query_filter = f"PartitionKey eq '{user_id}'"
+#         entities = table_client.query_entities(query_filter)
+
+#         for entity in entities:
+#             blog_id = entity['BlogId']
+#             if blog_id not in images_metadata:
+#                 images_metadata[blog_id] = []
+#             images_metadata[blog_id].append(entity)
+#         return images_metadata
+#     except Exception as e:
+#         print(f"Error fetching entities: {e}")
+#         return None
+
+# def fetch_images_metadata(user_id, blog_id):
+#     print(user_id, blog_id)
+#     # blog_id = 1
+#     # Connect to the table
+#     table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
+#     # images_metadata = {blog_id: [] for blog_id in blog_id}  # Initialize dictionary with empty lists for each blog_id
+#     images_metadata = {}
+
+#     try:
+#         # Iterate over each blog_id and fetch entities for each
+#         # for blog_id in blog_ids:
+#         query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'"
+#         entities = table_client.query_entities(query_filter)
+#         for entity in entities:
+#             # Add the entity to the corresponding blog_id key
+#             images_metadata[blog_id].append(entity)
+#     except Exception as e:
+#         print(f"Error fetching entities: {e}")
+#         # Handle error, possibly return None or keep the empty lists
+#     print(images_metadata)
+#     return images_metadata
+
+def fetch_images_metadata(user_id, blog_id):
     # Connect to the table
     table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
-    images_metadata = {}
+    images_metadata = {blog_id: []} # Initialize with the specific blog_id
+    # images_metadata = []
 
     try:
-        # Query to filter by user_id (PartitionKey)
-        query_filter = f"PartitionKey eq '{user_id}'"
+        # Create the query filter for a single blog_id
+        query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'\n"
         entities = table_client.query_entities(query_filter)
 
         for entity in entities:
-            blog_id = entity['BlogId']
-            if blog_id not in images_metadata:
-                images_metadata[blog_id] = []
+            # Add the entity to the list for the specified blog_id
             images_metadata[blog_id].append(entity)
-        return images_metadata
+            # images_metadata.append(entity)
+
     except Exception as e:
         print(f"Error fetching entities: {e}")
-        return None
+
+    return images_metadata
+
 
 
 # def fetch_images_metadata(user_id, blog_id):
@@ -73,6 +155,7 @@ def fetch_all_images_metadata(user_id):
 #     except Exception as e:
 #         print(f"Error fetching entities: {e}")
 #         return None
+
 
 # def generate_blob_urls_from_metadata(images_metadata):
 #     blob_urls = []
@@ -95,7 +178,7 @@ def fetch_all_images_metadata(user_id):
 #         print(f"Blob URL: {blob_url}")  # For debugging purposes
 
 #     return blob_urls
-    
+   
 def generate_blob_urls_by_blog_id(images_metadata):
     blob_urls_by_blog_id = {}
 
@@ -110,11 +193,12 @@ def generate_blob_urls_by_blog_id(images_metadata):
             # Construct the blob name and URL
             filename = f"{unique_id}_{user_id}{extension}{blog_id}"
             blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
+            # added blob_url[blog_id] instead of blob_url for now 
+            print("gen blob url: addded to the key: ", blog_id, "and the value: ", blob_url)
             blob_urls_by_blog_id[blog_id].append(blob_url)
             print(f"Blob URL for blog {blog_id}: {blob_url}")
-
+    print("here is the url we passed in!!!", blob_urls_by_blog_id)
     return blob_urls_by_blog_id
-
 
 def generate_unique_filename(original_filename, user_id=1, blog_id=1):
     extension = os.path.splitext(original_filename)[1]
@@ -190,8 +274,10 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB upload limit
 @app.route('/display-images')
 def display_images():
     user_id = request.args.get('user_id')
+    blog_id = request.args.get('blog_id')
 
-    images_metadata = fetch_all_images_metadata(user_id)
+    images_metadata = fetch_images_metadata(user_id, blog_id)
+    # images_metadata = fetch_all_images_metadata(user_id)
     blob_urls_by_blog_id = generate_blob_urls_by_blog_id(images_metadata)
 
     # Render a template to display images organized by blog_id
@@ -218,7 +304,7 @@ def upload_image():
         # Retrieve user_id and blog_id from form data
         user_id = request.form.get('user_id')
         blog_id = request.form.get('blog_id')
-        unique_filename = generate_unique_filename(original_filename, user_id, blog_id)
+        unique_filename, date = generate_unique_filename(original_filename, user_id, blog_id)
 
         #### WILL NEED TO REMOVE #####
         print(f"unique_filename: {unique_filename}")  # For debugging purposes
@@ -231,7 +317,7 @@ def upload_image():
         blob_client.upload_blob(file, blob_type="BlockBlob", overwrite=True)
 
         # Insert metadata into Azure Table Storage
-        insert_image_metadata(IMAGE_STORAGE_CONNECTION_STRING, user_id, blog_id, original_filename)
+        insert_image_metadata(IMAGE_STORAGE_CONNECTION_STRING, user_id, blog_id, original_filename, date)
 
 
         return redirect(url_for('show_uploaded_image', filename=unique_filename))
@@ -245,13 +331,14 @@ def generate_unique_filename(original_filename, user_id=1, blog_id=1):
     extension = os.path.splitext(original_filename)[1]
     unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
     filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
-    return filename
+    return filename, unique_id
 
    
-def insert_image_metadata(storage_connection_string, user_id, blog_id, original_filename):
+def insert_image_metadata(storage_connection_string, user_id, blog_id, original_filename, date):
     # Generate unique parts of the filename
+    unique_id = date
     extension = os.path.splitext(original_filename)[1]
-    unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    # unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
     filename = f"{unique_id}_{user_id if user_id else 'guest'}{blog_id}{extension}"
 
     # Create a table client
@@ -391,23 +478,48 @@ def fetch_user_settings(user_id):
     response_code, error, data = fetch_data_from_microservice(url, user_id)
     return response_code, error, data
 
+# @app.route("/home", methods=["GET"])
+# def home():
+#     user_id = request.args.get('user_id', default=2, type=int)
+
+#     response_code, settings_error, data = fetch_user_settings(user_id)
+
+#     # if error or not data:
+#     #     return render_template("home.html", error=error or "User not found")
+    
+#     profile = data[0] if data else {}
+    
+#     # Here you would filter blogs and comments based on the user_id
+#     # Assuming these functions return the appropriate data 
+#     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
+#     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
+
+#     return render_template("home.html", blogs=blogs, comments=comments, profile=profile, error=settings_error)
+
 @app.route("/home", methods=["GET"])
 def home():
     user_id = request.args.get('user_id', default=2, type=int)
 
     response_code, settings_error, data = fetch_user_settings(user_id)
-
-    # if error or not data:
-    #     return render_template("home.html", error=error or "User not found")
     
     profile = data[0] if data else {}
     
-    # Here you would filter blogs and comments based on the user_id
-    # Assuming these functions return the appropriate data 
     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
 
-    return render_template("home.html", blogs=blogs, comments=comments, profile=profile, error=settings_error)
+    # Fetch images metadata for each blog_id and generate URLs
+    images_by_blog = {}
+    for blog_id in blog_ids:
+        # images_metadata = fetch_all_images_metadata(user_id, blog_id)
+        images_metadata = fetch_images_metadata(user_id, blog_id)
+        # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
+        images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
+    
+    print("\n\n\n in home", images_by_blog, "\n\n\n")
+
+    return render_template("home.html", blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
+
+
 
 @app.errorhandler(404)
 def not_found(e):

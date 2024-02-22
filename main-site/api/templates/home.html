@@ -41,12 +41,49 @@
                 </div>
             {% endfor %}
         {% endif %}
+        <!-- Image gallery for this blog
+        <div class="image-gallery">
+            {% if images_by_blog.get(blog_id) %}
+                {% for image_url in images_by_blog[blog_id] %}
+                    <img src="{{ image_url }}" alt="Blog image" class="img-fluid">
+                {% endfor %}
+            {% endif %}
+        </div> -->
+        <!-- Diagnostic print statements -->
+        <!-- <div>
+            <p>Checking images for blog_id: {{ blog_id }}</p>
+            <p>images_by_blog dictionary: {{ images_by_blog }}</p>
+            <p>Existence check (True/False): {{ images_by_blog.get(blog_id) }}</p>
+        </div> -->
+
+        <!-- Image gallery with additional diagnostics -->
+        <div class="image-gallery">
+            {% if images_by_blog.get(blog_id) %}
+                {% for image_url in images_by_blog[blog_id][blog_id] %}
+                    <!-- <p>Image URL: {{ image_url }}</p> -->
+                    <!-- <p>Blog ID: {{ blog_id }}</p> -->
+                    <img src="{{ image_url }}" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
+                {% else %}
+                    <!-- <p>No images found for this blog ID.</p> -->
+                {% endfor %}
+            {% else %}
+                <!-- <p>images_by_blog.get(blog_id) returned False. No images to display.</p> -->
+            {% endif %}
+        </div>     
+
         <div class="mb-3">
             <form class="d-flex justify-content-between align-items-center">
                 <input class="form-control me-2" type="text" placeholder="Add a comment...">
                 <button class="btn btn-outline-primary" type="submit">Comment</button>
             </form>
         </div>
+        <!-- Inside the blog display loop -->
+        <form action="{{ url_for('upload_image') }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="user_id" value="{{ blog.user_id }}">
+            <input type="hidden" name="blog_id" value="{{ blog_id }}">
+            <input type="file" name="image" required>
+            <button type="submit" class="btn btn-primary">Upload Image</button>
+        </form>
     {% endfor %}
 {% else %}
     <p>JUST FOR TESTING</p>
@@ -72,4 +109,4 @@ function toggleHeart(button) {
 }
 </script>
 
-{% endblock %}
+{% endblock %} -->
