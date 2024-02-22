@@ -36,45 +36,84 @@ try:
 except: 
     print("\n\n\nWasn't able to connect to image table\n\n\n")
 
-def fetch_images_metadata(user_id, blog_id):
+def fetch_all_images_metadata(user_id):
     # Connect to the table
     table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
-    images_metadata = []
+    images_metadata = {}
 
     try:
-        # Query to filter by user_id (ParitionKey) and blog_id (BlogId)
-        query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'"
+        # Query to filter by user_id (PartitionKey)
+        query_filter = f"PartitionKey eq '{user_id}'"
         entities = table_client.query_entities(query_filter)
 
         for entity in entities:
-            images_metadata.append(entity)
+            blog_id = entity['BlogId']
+            if blog_id not in images_metadata:
+                images_metadata[blog_id] = []
+            images_metadata[blog_id].append(entity)
         return images_metadata
     except Exception as e:
         print(f"Error fetching entities: {e}")
         return None
 
 
-def generate_blob_urls_from_metadata(images_metadata):
-    blob_urls = []
+# def fetch_images_metadata(user_id, blog_id):
+#     # Connect to the table
+#     table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
+#     images_metadata = []
 
-    for metadata in images_metadata:
-        # Reconstruct the unique filename using the stored metadata
-        extension = metadata['Extension']
-        unique_id = metadata['RowKey']
-        user_id = metadata['PartitionKey']
-        blog_id = metadata['BlogId']
-        # original_filename = metadata['OriginalFilename']
+#     try:
+#         # Query to filter by user_id (ParitionKey) and blog_id (BlogId)
+#         query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'"
+#         entities = table_client.query_entities(query_filter)
 
-        # RowKey is datetime - unique part
-        # date_userid-extension-blog_id       
-        filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
+#         for entity in entities:
+#             images_metadata.append(entity)
+#         return images_metadata
+#     except Exception as e:
+#         print(f"Error fetching entities: {e}")
+#         return None
 
-        # Construct the full blob URL
-        blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
-        blob_urls.append(blob_url)
-        print(f"Blob URL: {blob_url}")  # For debugging purposes
+# def generate_blob_urls_from_metadata(images_metadata):
+#     blob_urls = []
 
-    return blob_urls
+#     for metadata in images_metadata:
+#         # Reconstruct the unique filename using the stored metadata
+#         extension = metadata['Extension']
+#         unique_id = metadata['RowKey']
+#         user_id = metadata['PartitionKey']
+#         blog_id = metadata['BlogId']
+#         # original_filename = metadata['OriginalFilename']
+
+#         # RowKey is datetime - unique part
+#         # date_userid-extension-blog_id       
+#         filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
+
+#         # Construct the full blob URL
+#         blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
+#         blob_urls.append(blob_url)
+#         print(f"Blob URL: {blob_url}")  # For debugging purposes
+
+#     return blob_urls
+    
+def generate_blob_urls_by_blog_id(images_metadata):
+    blob_urls_by_blog_id = {}
+
+    for blog_id, metadata_list in images_metadata.items():
+        blob_urls_by_blog_id[blog_id] = []
+
+        for metadata in metadata_list:
+            extension = metadata['Extension']
+            unique_id = metadata['RowKey']
+            user_id = metadata['PartitionKey']
+
+            # Construct the blob name and URL
+            filename = f"{unique_id}_{user_id}{extension}{blog_id}"
+            blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
+            blob_urls_by_blog_id[blog_id].append(blob_url)
+            print(f"Blob URL for blog {blog_id}: {blob_url}")
+
+    return blob_urls_by_blog_id
 
 
 def generate_unique_filename(original_filename, user_id=1, blog_id=1):
@@ -137,16 +176,27 @@ def get_blob_sas_url(container_name, blob_name):
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB upload limit
 
+# @app.route('/display-images')
+# def display_images():
+#     user_id = request.args.get('user_id')
+#     # blog_id = request.args.get('blog_id')  # Assuming a single blog_id is used for this request
+
+#     images_metadata = fetch_images_metadata(user_id, blog_id)
+#     blob_urls = generate_blob_urls_from_metadata(images_metadata)
+
+#     # Render a template to display images
+#     return render_template('display_images.html', blob_urls=blob_urls)
+
 @app.route('/display-images')
 def display_images():
     user_id = request.args.get('user_id')
-    blog_id = request.args.get('blog_id')  # Assuming a single blog_id is used for this request
 
-    images_metadata = fetch_images_metadata(user_id, blog_id)
-    blob_urls = generate_blob_urls_from_metadata(images_metadata)
+    images_metadata = fetch_all_images_metadata(user_id)
+    blob_urls_by_blog_id = generate_blob_urls_by_blog_id(images_metadata)
 
-    # Render a template to display images
-    return render_template('display_images.html', blob_urls=blob_urls)
+    # Render a template to display images organized by blog_id
+    return render_template('display_images.html', blob_urls_by_blog_id=blob_urls_by_blog_id)
+
 
 @app.route('/upload', methods=['GET'])
 def upload_form():
