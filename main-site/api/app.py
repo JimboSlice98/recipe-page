@@ -6,7 +6,7 @@ from datetime import timedelta
 import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, redirect, render_template, request, session,
-                   url_for)
+                   url_for, jsonify)
 # from flask_login import (LoginManager, current_user, login_required,                          login_user, logout_user)
 # from oauthlib.oauth2 import WebApplicationClient
 from requests.exceptions import HTTPError, RequestException
@@ -17,9 +17,91 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from azure.data.tables import TableServiceClient, TableClient
 
+load_dotenv()
+from openai import OpenAI
+import openai
+
+client = OpenAI()
+
 # Configure app.py
 app = Flask(__name__)
 
+# Load your OpenAI API key from an environment variable for security
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+def get_recipe_from_prompt(user_input):
+    # Only use this when we need it, as charging per request
+#     if len(user_input) > 100:
+#         return 
+#     prompt = f"{user_input} - give me a recipe for the before. i want you do give the answers in dictionary format with  title: x, ingredients: y, steps: x .x string and y and z should be a list of strings, so then i will use the dictionary values based on the keys)"
+#     print(prompt)
+
+#    # Use the client to create a chat completion
+#     chat_completion = client.chat.completions.create(
+#         messages=[{
+#             "role": "user",
+#             "content": prompt,
+#         }],
+#         model="gpt-3.5-turbo",
+#     )
+
+#     # response = chat_completion.choices[0].message['content']
+#     response = chat_completion.choices[0].message.content
+    
+#     print(response)
+
+    response = {
+    "title": "Chocolate Cake",
+    "ingredients": [
+        "1 and 3/4 cups all-purpose flour",
+        "2 cups granulated sugar",
+        "3/4 cup unsweetened cocoa powder",
+        "2 teaspoons baking soda",
+        "1 teaspoon baking powder",
+        "1 teaspoon salt",
+        "2 large eggs",
+        "1 cup buttermilk",
+        "1/2 cup vegetable oil",
+        "2 teaspoons vanilla extract",
+        "1 cup hot water"
+    ],
+    "steps": [
+        "Preheat oven to 350°F (175°C) and grease and flour two 9-inch round cake pans.",
+        "In a large bowl, whisk together flour, sugar, cocoa powder, baking soda, baking powder, and salt.",
+        "Add eggs, buttermilk, oil, and vanilla extract to the dry ingredients and mix until well combined.",
+        "Stir in hot water until the batter is smooth and pour into prepared cake pans.",
+        "Bake for 30-35 minutes or until a toothpick inserted into the center comes out clean.",
+        "Let the cakes cool in the pans for 10 minutes, then transfer to a wire rack to cool completely.",
+        "Frost and decorate as desired. Enjoy your delicious chocolate cake!"
+    ]
+    }
+    # note this doesnt work when live!!!!
+    return dict(response)
+    # use this line if we are in production!
+    # Convert JSON string to Python dictionary
+    # response_dict = json.loads(response)
+    
+    # return response_dict
+
+
+@app.route('/generate-recipe', methods=['POST'])
+def generate_recipe():
+    try:
+        # use this line in production, but not in testing 
+        # user_input = request.form['prompt']
+        user_input = "a delicious chocolate cake"
+        output = get_recipe_from_prompt(user_input)
+        print("here is the output that we pass to jinja\n\n", output)
+        # {title, ingredients, steps} - the keys
+        return jsonify(output)
+    
+    except Exception as e:
+        # Handle errors
+        print(e)  # Print the error to the console
+        return jsonify({'error': str(e)}), 500
+    
+
+### IMAGE STORAGE STUFF ###
 # image storage connection constants
 try:
     IMAGE_STORAGE_CONNECTION_STRING = os.environ.get('IMAGE_STORAGE_CONNECTION_STRING')

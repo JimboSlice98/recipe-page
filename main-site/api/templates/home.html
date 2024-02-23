@@ -15,6 +15,16 @@
     <p>Error: {{ error }}</p>
 {% endif %}
 
+<!-- Add AI Recipe Prompt Form -->
+<div class="card my-4">
+    <div class="card-body">
+        <h3 class="card-title">Ask AI for a Recipe</h3>
+        <div class="input-group mb-3">
+            <input type="text" id="ai-prompt" class="form-control" placeholder="Enter your recipe request...">
+            <button class="btn btn-secondary" type="button" onclick="askAI()">AI</button>
+        </div>
+    </div>
+</div>
 
 <!-- Add Recipe Form -->
 <div class="card my-4">
@@ -133,6 +143,29 @@ function addRecipe() {
     
     // Here you will later on add the AJAX call or form submission to send data to your Flask app
     // to contact the microservice from here?
+}
+// Function to handle the AI button click
+function askAI() {
+    var prompt = document.getElementById('ai-prompt').value;
+    // Call the Flask endpoint to generate the recipe
+    fetch('/generate-recipe', {
+        method: 'POST',
+        body: new URLSearchParams({ 'prompt': prompt }),
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Assuming the data is the response text from OpenAI
+        // Here you will parse the text into title, ingredients, and steps
+        // And then set the values of your form fields
+        // This is a placeholder, you will need to replace it with actual parsing logic
+        document.getElementById('recipe-title').value = data.title;
+        document.getElementById('recipe-ingredients').value = data.ingredients;
+        document.getElementById('recipe-steps').value = data.steps;
+    })
+    .catch(error => console.error('Error:', error));
 }
 </script>
 {% endblock %}
