@@ -42,15 +42,19 @@
         {% endif %}
         <!-- Image gallery for this blog -->
         <div class="image-gallery">
+            <!-- <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
             <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
             <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
             <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
-            <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
-            
+             -->
             {% if images_by_blog.get(blog_id) %}
                 <!-- will need to fix this double indexing  -->
                 {% for image_url in images_by_blog[blog_id][blog_id] %}
                     <img src="{{ image_url }}" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
+                    <form action="{{ url_for('delete_image') }}" method="post">
+                        <input type="hidden" name="blob_url" value="{{ image_url }}">
+                        <button type="submit" class="delete-button">X</button>
+                    </form>
                 {% endfor %}
             {% endif %}
         </div>

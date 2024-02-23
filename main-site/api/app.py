@@ -195,10 +195,10 @@ def generate_blob_urls_by_blog_id(images_metadata):
                 filename = f"{unique_id}_{user_id}{extension}{blog_id}"
                 blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
                 # added blob_url[blog_id] instead of blob_url for now 
-                print("gen blob url: addded to the key: ", blog_id, "and the value: ", blob_url)
+                # print("gen blob url: addded to the key: ", blog_id, "and the value: ", blob_url)
                 blob_urls_by_blog_id[blog_id].append(blob_url)
-                print(f"Blob URL for blog {blog_id}: {blob_url}")
-        print("here is the url we passed in!!!", blob_urls_by_blog_id)
+                # print(f"Blob URL for blog {blog_id}: {blob_url}")
+        # print("here is the url we passed in!!!", blob_urls_by_blog_id)
     except:
         if metadata:
             print("metadata was okay")
@@ -224,6 +224,15 @@ def get_image_metadata(storage_connection_string, user_id, unique_id):
         print(f"Entity could not be found: {e}")
         return None
 
+def delete_image_metadata(user_id, unique_id):
+    try:
+        # Create a table client
+        table_client = TableServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING).get_table_client(table_name=IMAGE_STORAGE_TABLE_NAME)
+        # Delete the entity
+        table_client.delete_entity(partition_key=str(user_id), row_key=str(unique_id))
+        print(f"Metadata for {unique_id} deleted successfully.")
+    except Exception as e:
+        print(f"Failed to delete metadata: {e}")
 
 def upload_image_to_blob(container_name, blob_name, upload_file_path):
     """
@@ -249,6 +258,17 @@ def upload_image_to_blob(container_name, blob_name, upload_file_path):
         blob_client.upload_blob(data, overwrite=True)
     
     print(f"File {upload_file_path} uploaded to {container_name}/{blob_name}")
+
+def delete_image_from_blob(container_name, blob_name):
+    try:
+        # Create a blob client
+        blob_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING).get_blob_client(container=container_name, blob=blob_name)
+        # Delete the blob
+        blob_client.delete_blob()
+        print(f"Blob {blob_name} deleted successfully.")
+    except Exception as e:
+        print(f"Failed to delete blob: {e}")
+
 
 def get_blob_sas_url(container_name, blob_name):
     """
@@ -296,6 +316,40 @@ def display_images():
     # Render a template to display images organized by blog_id
     return render_template('display_images.html', blob_urls_by_blog_id=blob_urls_by_blog_id)
 
+@app.route('/delete-image', methods=['POST'])
+def delete_image():
+    data = request.form
+    blob_url = data.get('blob_url')
+    print("trying to delete the blob", blob_url)
+    
+    # Extract the blob name from the blob_url
+    # https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240223021611_2.jpgblog_id1233
+    blob_name = blob_url.split("/")[-1]
+    
+     # Decode the unique filename to get user_id, unique_id, and blog_id
+    # parts = blob_name.split("_")
+    # unique_id = parts[0]
+    # user_id = parts[1]
+    # blog_id_with_extension = parts[2]
+    
+    # # Extract the extension and blog_id
+    # blog_id = ''.join(filter(str.isdigit, blog_id_with_extension))
+    # sse-recipe-storage-container/20240223021611_2.jpgblog_id1233
+
+    # Decode the unique filename to get user_id and unique_id
+    unique_id, user_id = blob_name.split("_")[:2]
+    print(f"unique id {unique_id} and user_id {user_id}")
+    # get only the number before the .jpg etc
+    user_id = user_id.split(".")[0]
+    
+    # Remove the image from blob storage
+    delete_image_from_blob(IMAGE_STORAGE_CONTAINER_NAME, blob_name)
+    
+    # Remove the metadata from the table
+    delete_image_metadata(user_id, unique_id)
+    
+    return redirect(url_for('home', user_id=user_id))
+
 
 @app.route('/upload', methods=['GET'])
 def upload_form():
@@ -325,7 +379,7 @@ def upload_image():
         unique_filename, date = generate_unique_filename(original_filename, user_id, blog_id)
 
         #### WILL NEED TO REMOVE #####
-        print(f"unique_filename: {unique_filename}")  # For debugging purposes
+        # print(f"unique_filename: {unique_filename}")  # For debugging purposes
         try:
             # Get a blob client and upload the file stream directly to Azure Blob Storage
             blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
@@ -540,7 +594,7 @@ def home():
         # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
         images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
     
-    print("\n\n\n in home", images_by_blog, "\n\n\n")
+    # print("\n\n\n in home", images_by_blog, "\n\n\n")
 
     return render_template("home.html", blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
 
