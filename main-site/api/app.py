@@ -27,7 +27,10 @@ client = OpenAI()
 app = Flask(__name__)
 
 # Load your OpenAI API key from an environment variable for security
-openai.api_key = os.getenv("OPENAI_API_KEY")
+try:
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+except:
+    openai.api_key = None
 
 def get_recipe_from_prompt(user_input):
     # Only use this when we need it, as charging per request
