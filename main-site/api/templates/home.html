@@ -20,6 +20,34 @@
         <div class="card mb-3">
             <div class="card-body">
                 <h5 class="card-title">{{ blog.blog_name }}</h5>
+                <!-- Image gallery for this blog -->
+                <div class="container">
+                    <div class="row">
+                        {% if images_by_blog.get(blog_id) %}
+                            {% for image_url in images_by_blog[blog_id][blog_id] %}
+                                <div class="col">
+                                    <div class="position-relative">
+                                        <img src="{{ image_url }}" alt="Blog image" class="img-fluid rounded" style="max-height: 150px; width: auto;">
+                                        <form action="{{ url_for('delete_image') }}" method="post" class="position-absolute" style="top: 0; right: 0;">
+                                            <input type="hidden" name="blob_url" value="{{ image_url }}">
+                                            <button type="submit" class="btn btn-danger btn-sm">&times;</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                
+                <div class="mb-3">
+                    <form action="{{ url_for('upload_image') }}" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="user_id" value="{{ blog.user_id }}">
+                        <input type="hidden" name="blog_id" value="{{ blog_id }}">
+                        <input type="file" name="image" required>
+                        <button type="submit" class="btn btn-primary">Upload Image</button>
+                    </form>
+                </div>
                 <p class="card-text"><strong>User: </strong>{{ blog.user_id }}</p>
                 <p class="card-text"><strong>Ingredients:</strong> {{ blog.recipe_ingredients }}</p>
                 <p class="card-text"><strong>Steps:</strong> {{ blog.recipe_steps }}</p>
@@ -40,36 +68,16 @@
                 </div>
             {% endfor %}
         {% endif %}
-        <!-- Image gallery for this blog -->
-        <div class="image-gallery">
-            <!-- <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
-            <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
-            <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
-            <img src="https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240222202419_2.jpgblog_id1234" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
-             -->
-            {% if images_by_blog.get(blog_id) %}
-                <!-- will need to fix this double indexing  -->
-                {% for image_url in images_by_blog[blog_id][blog_id] %}
-                    <img src="{{ image_url }}" alt="Blog image" class="img-fluid" onerror="this.style.display='none'">
-                    <form action="{{ url_for('delete_image') }}" method="post">
-                        <input type="hidden" name="blob_url" value="{{ image_url }}">
-                        <button type="submit" class="delete-button">X</button>
-                    </form>
-                {% endfor %}
-            {% endif %}
-        </div>
-        <div class="mb-3">
-            <form action="{{ url_for('upload_image') }}" method="post" enctype="multipart/form-data">
-                <input type="hidden" name="user_id" value="{{ blog.user_id }}">
-                <input type="hidden" name="blog_id" value="{{ blog_id }}">
-                <input type="file" name="image" required>
-                <button type="submit" class="btn btn-primary">Upload Image</button>
-            </form>
-        </div>
     {% endfor %}
 {% else %}
-    <p>JUST FOR TESTING</p>
-    <p>Error: {{ error }}</p>
+    <!-- <p>JUST FOR TESTING</p>
+    <p>Error: {{ error }}</p> -->
+    <div class="text-center my-5">
+        <img src="path_to_your_cartoon_image_of_food" alt="No recipes found" class="img-fluid" style="max-width: 200px;">
+        <h3 class="mt-3">No Recipes Found</h3>
+        <p class="text-muted">We couldn't find any recipes for this user. Try searching for something else!</p>
+        <a class="btn btn-primary" href="/home">Go Back</a>
+    </div>
 {% endif %}
 
 <script>

@@ -326,14 +326,6 @@ def delete_image():
     # https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240223021611_2.jpgblog_id1233
     blob_name = blob_url.split("/")[-1]
     
-     # Decode the unique filename to get user_id, unique_id, and blog_id
-    # parts = blob_name.split("_")
-    # unique_id = parts[0]
-    # user_id = parts[1]
-    # blog_id_with_extension = parts[2]
-    
-    # # Extract the extension and blog_id
-    # blog_id = ''.join(filter(str.isdigit, blog_id_with_extension))
     # sse-recipe-storage-container/20240223021611_2.jpgblog_id1233
 
     # Decode the unique filename to get user_id and unique_id
@@ -391,7 +383,7 @@ def upload_image():
             # Insert metadata into Azure Table Storage
             insert_image_metadata(IMAGE_STORAGE_CONNECTION_STRING, user_id, blog_id, original_filename, date)
 
-            return redirect(url_for('home'))
+            return redirect(url_for('home', user_id=user_id))
         except:
             print("failed")
             return redirect(url_for('404'))
@@ -595,18 +587,20 @@ def home():
         images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
     
     # print("\n\n\n in home", images_by_blog, "\n\n\n")
-
-    return render_template("home.html", blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
-
-
-
-@app.errorhandler(404)
-def not_found(e):
-    return render_template("404.html"), 404
+    if blogs:   
+        return render_template("home.html", blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
+    else:
+        return render_template("no-recipe.html")
 
 @app.route("/404", methods=["GET"])
 def not_found(e):
-    return render_template("404.html"), 404
+    return render_template("no-recipe.html"), 404
+
+
+@app.route("/no-users", methods=["GET"])
+def not_users():
+    return render_template("no-recipe.html")
+
 
 @app.route("/profile", methods=["GET"])
 def profile():
