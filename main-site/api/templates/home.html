@@ -15,6 +15,29 @@
     <p>Error: {{ error }}</p>
 {% endif %}
 
+
+<!-- Add Recipe Form -->
+<div class="card my-4">
+    <div class="card-body">
+        <h3 class="card-title">Add New Recipe</h3>
+        <form id="add-recipe-form" class="rounded border p-3" style="background-color: #f8f9fa;">
+            <div class="mb-3">
+                <label for="recipe-title" class="form-label">Title</label>
+                <input type="text" class="form-control form-control-lg" id="recipe-title" placeholder="Enter recipe title" required>
+            </div>
+            <div class="mb-3">
+                <label for="recipe-ingredients" class="form-label">Ingredients</label>
+                <textarea class="form-control" id="recipe-ingredients" rows="3" placeholder="List ingredients here" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="recipe-steps" class="form-label">Steps</label>
+                <textarea class="form-control" id="recipe-steps" rows="5" placeholder="Describe the steps here" required></textarea>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="addRecipe()">Add Recipe</button>
+        </form>
+    </div>
+</div>
+
 {% if blogs %}
     {% for blog_id, blog in blogs.items() %}
         <div class="card mb-3">
@@ -96,6 +119,20 @@ function toggleHeart(button) {
         heart.classList.remove('bi-heart-fill');
         heart.classList.add('bi-heart');
     }
+}
+function addRecipe() {
+    // Placeholder function to handle form submission
+    var title = document.getElementById('recipe-title').value;
+    var ingredients = document.getElementById('recipe-ingredients').value;
+    var steps = document.getElementById('recipe-steps').value;
+    
+    // For now, just log to the console
+    console.log('Title:', title);
+    console.log('Ingredients:', ingredients);
+    console.log('Steps:', steps);
+    
+    // Here you will later on add the AJAX call or form submission to send data to your Flask app
+    // to contact the microservice from here?
 }
 </script>
 {% endblock %}
