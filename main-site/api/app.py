@@ -652,11 +652,18 @@ def test():
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
         
+        # if user_id:
+        #     query = "SELECT * FROM "User""
+        #     params = (user_id,)
+        # else:
+        #     query = "SELECT * FROM "User""
+        #     params = ()
+
         if user_id:
-            query = "SELECT * FROM user_authentication"
+            query = 'SELECT * FROM "User"'
             params = (user_id,)
         else:
-            query = "SELECT * FROM user_authentication"
+            query = 'SELECT * FROM "User"'
             params = ()
 
         cursor.execute(query, params)
