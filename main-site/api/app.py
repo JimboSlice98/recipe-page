@@ -2,6 +2,10 @@ import json
 import os
 import secrets
 from datetime import timedelta
+import pyodbc
+#from flask_sqlalchemy import SQLAlchemy
+#from app import app, db  # Assuming 'app' is your Flask application instance and 'db' is your SQLAlchemy instance
+#from models import User
 
 import requests
 from dotenv import load_dotenv
@@ -11,7 +15,7 @@ from flask import (Flask, abort, redirect, render_template, request, session,
 # from oauthlib.oauth2 import WebApplicationClient
 from requests.exceptions import HTTPError, RequestException
 
-from azure.identity import DefaultAzureCredential
+# from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
@@ -621,3 +625,112 @@ def register():
         # In a real application, you should handle the data properly.
         return 'Registration successful'
     return render_template('register.html')
+
+#
+#@app.route("/get-user-authentication", methods=["GET"])
+@app.route("/test", methods=["GET"])
+#def get_user_authentication():
+def test():
+    user_id = request.args.get("user_id")
+
+    print(
+        f"Driver   = {{{os.environ['USER_AUTHENTICATION_DRIVER']}}};\n"
+        f"Server   = {os.environ['USER_AUTHENTICATION_SERVER']};\n"
+        f"Database = {os.environ['USER_AUTHENTICATION_DATABASE']};\n"
+        f"UID      = {os.environ['USER_AUTHENTICATION_USERNAME']};\n"
+        f"PWD      = {os.environ['USER_AUTHENTICATION_PASSWORD']};\n"
+        )
+
+    try:
+        conn_str = (
+            f"Driver={{{os.environ['USER_AUTHENTICATION_DRIVER']}}};"
+            f"Server={os.environ['USER_AUTHENTICATION_SERVER']};"
+            f"Database={os.environ['USER_AUTHENTICATION_DATABASE']};"
+            f"UID={os.environ['USER_AUTHENTICATION_USERNAME']};"
+            f"PWD={os.environ['USER_AUTHENTICATION_PASSWORD']};"
+        )
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+        
+        if user_id:
+            query = "SELECT * FROM user_authentication"
+            params = (user_id,)
+        else:
+            query = "SELECT * FROM user_authentication"
+            params = ()
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        # users_details = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
+        
+        # if users_details:
+        #     return jsonify(users_details)
+        # else:
+        #     return jsonify({"error": "No data found"}), 404
+
+    except pyodbc.Error as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+# # SQLAlchemy configuration
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://sse-user-authentication-admin:fTH4&qrse$$Geq@sse-user-authentication-server.database.windows.net/sse-user_authentication-database?driver=ODBC+Driver+17+for+SQL+Server'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# db = SQLAlchemy(app)
+
+# # Define your database model
+# class User(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     first_name = db.Column(db.String(100))
+#     last_name = db.Column(db.String(100))
+#     gender = db.Column(db.String(20))
+#     date_of_birth = db.Column(db.Date)
+#     email = db.Column(db.String(120), unique=True)
+#     postcode = db.Column(db.String(20))
+#     password = db.Column(db.String(100))
+
+#     def __repr__(self):
+#         return f'<User {self.id}>'
+
+# # Flask route
+# @app.route("/test", methods=["GET"])
+# def get_user_authentication():
+#     user_id = request.args.get("user_id")
+
+#     try:
+#         if user_id:
+#             user = User.query.get(user_id)
+#             if user:
+#                 user_data = {
+#                     "user_id": user.id,
+#                     "first_name": user.first_name,
+#                     "last_name": user.last_name,
+#                     "gender": user.gender,
+#                     "date_of_birth": user.date_of_birth.strftime("%Y-%m-%d"),
+#                     "email": user.email,
+#                     "postcode": user.postcode,
+#                     "password": user.password
+#                 }
+#                 return jsonify(user_data)
+#             else:
+#                 return jsonify({"error": "User not found"}), 404
+#         else:
+#             users = User.query.all()
+#             users_data = [{
+#                 "user_id": user.id,
+#                 "first_name": user.first_name,
+#                 "last_name": user.last_name,
+#                 "gender": user.gender,
+#                 "date_of_birth": user.date_of_birth.strftime("%Y-%m-%d"),
+#                 "email": user.email,
+#                 "postcode": user.postcode,
+#                 "password": user.password
+#             } for user in users]
+#             return jsonify(users_data)
+
+#     except Exception as e:
+#         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+# if __name__ == '__main__':
+#     app.run(debug=True)
