@@ -12,8 +12,7 @@ app = Flask(__name__)
 
 @app.route("/get-user-details", methods=["GET"])
 def get_user_details():
-    user_id = request.args.get("user_id")
-    user_id = 2
+    user_id = request.args.get("user_id")    
 
     print(
         f"Driver   = {{{os.environ['USER_DETAILS_DRIVER']}}};\n"
