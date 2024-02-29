@@ -4,13 +4,14 @@
 <div class="container mt-4">
     <h2>Profile</h2>
     <form action="/update-profile" method="post">
+        <input type="hidden" name="user_id" value="{{ user_id.user_id if user_id else '1' }}">
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ profile.email if profile else '' }}" required>
+            <input type="email" class="form-control" id="email" name="email" value="{{ profile.email if profile else '' }}">
         </div>
         <div class="mb-3">
             <label for="displayName" class="form-label">Display Name</label>
-            <input type="text" class="form-control" id="displayName" name="display_name" value="{{ profile.display_name if profile else '' }}" required>
+            <input type="text" class="form-control" id="displayName" name="display_name" value="{{ profile.display_name if profile else '' }}">
         </div>
         <div class="mb-3">
             <label for="cookingLevel" class="form-label">Cooking Level</label>
@@ -46,4 +47,3 @@
     </form>
 </div>
 {% endblock %}
-

@@ -6,14 +6,17 @@
         <div class="card-body">
             <h3 class="card-title">Profile Info</h3>
             <p class="card-text"><strong>User ID:</strong> {{ profile.user_id }}</p>
+            <p class="card-text"><strong>Name:</strong> {{ profile.display_name }}</p>
             <p class="card-text"><strong>Cooking Ability:</strong> {{ profile.cooking_level }}</p>
-            <p class="card-text"><strong>Birthday:</strong> {{ profile.birthday }}</p>
+            <p class="card-text"><strong>Favorite Cuisine:</strong> {{ profile.favorite_cuisine }}</p>
+            <p class="card-text"><strong>Location:</strong> {{ profile.location }}</p>
+            <p class="card-text"><strong>Bio:</strong> {{ profile.short_bio }}</p>
         </div>
     </div>
 {% else %}
-    <p>JUST FOR TESTING</p>
-    <p>Error: {{ error }}</p>
+    <p>No profile information available. Please update your profile.</p>
 {% endif %}
+
 
 <!-- Add AI Recipe Prompt Form -->
 <div class="card my-4">

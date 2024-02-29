@@ -564,7 +564,7 @@ def home():
     
     # print("\n\n\n in home", images_by_blog, "\n\n\n")
     if blogs:   
-        return render_template("home.html", blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
+        return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
     else:
         return render_template("no-recipe.html")
 
@@ -577,28 +577,61 @@ def not_found(e):
 def not_users():
     return render_template("no-recipe.html")
 
-
 @app.route("/profile", methods=["GET"])
 def profile():
     user_id = request.args.get('user_id', default=None, type=int)
     
-    # Placeholder for fetching user settings. Replace with actual data retrieval.
-    profile = None if not user_id else {"user_id": user_id, "user_name": "JaneDoe", "cooking_level": "Intermediate", "birthday": "1990-01-01"}
+    # Simulated response from a data fetching function
+    response = (200, None, [{'cooking_level': 'Intermediate', 'display_name': 'John Doe', 'email': 'johndoe@example.com', 'favorite_cuisine': 'Mexican', 'location': 'Los Angeles, USA', 'personal_website': '', 'profile_picture_url': 'https://example.com/profiles/johndoe.jpg', 'short_bio': 'Starting my culinary journey with tacos.', 'user_id': 2}])
+    
+    if response[0] == 200 and response[2]:
+        profile = response[2][0]  # Assuming the first (and only) item in the list is the profile
+    else:
+        profile = None
     
     if not profile:
-        # No profile found; pass an empty profile object to the template.
-        return render_template("profile.html", profile={}, error="No profile found. Please input your details.")
+        return render_template("profile.html", user_id=user_id, profile={}, error="No profile found. Please input your details.")
     
-    return render_template("profile.html", profile=profile)
+    return render_template("profile.html", user_id=user_id, profile=profile)
 
-# Assuming an update-profile route to handle POST requests
+
 @app.route("/update-profile", methods=["POST"])
 def update_profile():
-    # Here, you'd retrieve form data and update the profile accordingly.
-    # This function would eventually send data to a microservice to write to database.
+    # Extract the form data from the request
+    form_data = request.form
+
+    # Construct the data payload to send to the microservice
+    payload = {
+        'UserID': form_data.get('user_id'),  # Assuming you have a hidden input for the UserID in your form
+        'Email': form_data.get('email'),
+        'DisplayName': form_data.get('display_name'),
+        'CookingLevel': form_data.get('cooking_level'),
+        'FavoriteCuisine': form_data.get('favorite_cuisine'),
+        'ShortBio': form_data.get('short_bio'),
+        'ProfilePictureUrl': form_data.get('profile_picture_url'),
+        'PersonalWebsite': form_data.get('personal_website'),
+        'Location': form_data.get('location'),
+    }
     
-    # For now, redirect back to the profile page as a placeholder.
-    return redirect(url_for('profile'))
+    # The URL of the microservice endpoint
+    microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/update-user-details'
+    
+    try:
+        # Send the POST request to the microservice
+        response = requests.post(microservice_url, params=payload)
+        
+        # Check if the microservice successfully processed the request
+        if response.status_code == 200:
+            # Redirect to the profile page with a success message
+            return redirect(url_for('profile', message='Profile updated successfully'))
+        else:
+            # Redirect to the profile page with an error message
+            return redirect(url_for('profile', error='Failed to update profile'))
+    except requests.exceptions.RequestException as e:
+        # Handle any exceptions that occur during the request to the microservice
+        print(e)
+        return redirect(url_for('profile', error='An error occurred while updating the profile'))
+
 
 #for login page
 @app.route('/login', methods=['GET', 'POST'])
