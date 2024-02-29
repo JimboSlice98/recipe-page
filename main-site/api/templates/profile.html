@@ -1,4 +1,4 @@
-{% extends 'layout.html' %}
+<!-- {% extends 'layout.html' %}
 
 {% block content %}
 <div class="container mt-4">
@@ -24,4 +24,54 @@
         <button type="submit" class="btn btn-primary">Save Profile</button>
     </form>
 </div>
+{% endblock %} -->
+
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Profile</h2>
+    <form action="/update-profile" method="post">
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ profile.email if profile else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="displayName" class="form-label">Display Name</label>
+            <input type="text" class="form-control" id="displayName" name="display_name" value="{{ profile.display_name if profile else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="cookingLevel" class="form-label">Cooking Level</label>
+            <select class="form-select" id="cookingLevel" name="cooking_level">
+                <option selected>{{ profile.cooking_level if profile else 'Select level' }}</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Expert">Expert</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="favoriteCuisine" class="form-label">Favorite Cuisine</label>
+            <input type="text" class="form-control" id="favoriteCuisine" name="favorite_cuisine" value="{{ profile.favorite_cuisine if profile else '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="shortBio" class="form-label">Short Bio</label>
+            <textarea class="form-control" id="shortBio" name="short_bio" rows="3">{{ profile.short_bio if profile else '' }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="profilePictureUrl" class="form-label">Profile Picture URL</label>
+            <input type="text" class="form-control" id="profilePictureUrl" name="profile_picture_url" value="{{ profile.profile_picture_url if profile else '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="personalWebsite" class="form-label">Personal Website</label>
+            <input type="url" class="form-control" id="personalWebsite" name="personal_website" value="{{ profile.personal_website if profile else '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="location" class="form-label">Location</label>
+            <input type="text" class="form-control" id="location" name="location" value="{{ profile.location if profile else '' }}">
+        </div>
+        <!-- Birthday field already exists in your form -->
+        <button type="submit" class="btn btn-primary">Save Profile</button>
+    </form>
+</div>
 {% endblock %}
+
