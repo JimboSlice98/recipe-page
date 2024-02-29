@@ -521,8 +521,10 @@ def fetch_data_from_microservice(url, user_id):
     
 def fetch_user_settings(user_id):
     url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
+    # url = 'http://127.0.0.1:5000/get-user-details'
     
     response_code, error, data = fetch_data_from_microservice(url, user_id)
+    print("data from fetch function is",response_code, error, data)
     return response_code, error, data
 
 # @app.route("/home", methods=["GET"])
