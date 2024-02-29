@@ -10,7 +10,8 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a href="/home" class="navbar-brand" href="#">RecipeWorld</a>
+            <!-- Update the href attribute in the <a> tag to just '#' as a placeholder -->
+            <a href="#" class="navbar-brand home-link">RecipeWorld</a>
             <form class="d-flex" action="/home" method="get">
                 <input class="form-control me-2" type="search" placeholder="Search Usernames" aria-label="Search" name="user_id">
                 <button class="btn btn-outline-success" type="submit">Go</button>
@@ -30,22 +31,21 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function(){
-        // NOTE THIS IS ALL TEMPORARY UNTIL WE HAVE PYTHON SESSION!
-
-
         // Extract 'user_id' from the current URL's query parameters
         const params = new URLSearchParams(window.location.search);
-        const userId = params.get('user_id') || '3'; // Default to '3' if not found
+        const userId = params.get('user_id') || '1'; // Default to '1' if not found, adjust as needed
     
-        // Append 'user_id' to the profile button link
+        // Append 'user_id' to the home and profile button links
+        const homeLink = document.querySelector('.home-link');
+        if (homeLink) {
+            homeLink.setAttribute('href', `/home?user_id=${userId}`);
+        }
+        
         const profileButton = document.querySelector('.profile-button');
         if (profileButton) {
-            const href = profileButton.getAttribute('href');
-            profileButton.setAttribute('href', `${href}?user_id=${userId}`);
+            profileButton.setAttribute('href', `/profile?user_id=${userId}`);
         }
-    
-        // Optionally, update other internal links similarly
     });
-    </script>
+</script>
 </body>
 </html>

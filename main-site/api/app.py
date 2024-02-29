@@ -577,32 +577,34 @@ def not_found(e):
 def not_users():
     return render_template("no-recipe.html")
 
+
 @app.route("/profile", methods=["GET"])
 def profile():
     user_id = request.args.get('user_id', default=None, type=int)
+    print("/proflile user_id", user_id)
     
     # Simulated response from a data fetching function
-    response = (200, None, [{'cooking_level': 'Intermediate', 'display_name': 'John Doe', 'email': 'johndoe@example.com', 'favorite_cuisine': 'Mexican', 'location': 'Los Angeles, USA', 'personal_website': '', 'profile_picture_url': 'https://example.com/profiles/johndoe.jpg', 'short_bio': 'Starting my culinary journey with tacos.', 'user_id': 2}])
-    
-    if response[0] == 200 and response[2]:
-        profile = response[2][0]  # Assuming the first (and only) item in the list is the profile
-    else:
-        profile = None
+    response_code, settings_error, profile = fetch_user_settings(user_id)
+    # response = (200, None, [{'cooking_level': 'Intermediate', 'display_name': 'John Doe', 'email': 'johndoe@example.com', 'favorite_cuisine': 'Mexican', 'location': 'Los Angeles, USA', 'personal_website': '', 'profile_picture_url': 'https://example.com/profiles/johndoe.jpg', 'short_bio': 'Starting my culinary journey with tacos.', 'user_id': 2}])
+    print("profile data passed in", profile)
+    profile = profile[0]
     
     if not profile:
         return render_template("profile.html", user_id=user_id, profile={}, error="No profile found. Please input your details.")
     
-    return render_template("profile.html", user_id=user_id, profile=profile)
+    return render_template("profile.html", user_id=user_id, profile=profile, error=settings_error)
 
 
 @app.route("/update-profile", methods=["POST"])
 def update_profile():
     # Extract the form data from the request
     form_data = request.form
+    user_id = request.form.get('user_id')
+    print("update profile user_id", user_id)
 
     # Construct the data payload to send to the microservice
     payload = {
-        'UserID': form_data.get('user_id'),  # Assuming you have a hidden input for the UserID in your form
+        'UserID': user_id,  # Assuming you have a hidden input for the UserID in your form, form_data.get('user_id')
         'Email': form_data.get('email'),
         'DisplayName': form_data.get('display_name'),
         'CookingLevel': form_data.get('cooking_level'),
@@ -612,25 +614,27 @@ def update_profile():
         'PersonalWebsite': form_data.get('personal_website'),
         'Location': form_data.get('location'),
     }
+    print("in udpate profule the payload", payload)
     
     # The URL of the microservice endpoint
     microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/update-user-details'
+    # microservice_url = 'http://127.0.0.1:5000/update-user-details'
     
     try:
         # Send the POST request to the microservice
-        response = requests.post(microservice_url, params=payload)
+        response = requests.post(microservice_url, json=payload)
         
         # Check if the microservice successfully processed the request
         if response.status_code == 200:
             # Redirect to the profile page with a success message
-            return redirect(url_for('profile', message='Profile updated successfully'))
+            return redirect(url_for('profile', user_id=user_id, message='Profile updated successfully'))
         else:
             # Redirect to the profile page with an error message
-            return redirect(url_for('profile', error='Failed to update profile'))
+            return redirect(url_for('profile', user_id=user_id, error='Failed to update profile'))
     except requests.exceptions.RequestException as e:
         # Handle any exceptions that occur during the request to the microservice
         print(e)
-        return redirect(url_for('profile', error='An error occurred while updating the profile'))
+        return redirect(url_for('profile', user_id=user_id, error='An error occurred while updating the profile'))
 
 
 #for login page
