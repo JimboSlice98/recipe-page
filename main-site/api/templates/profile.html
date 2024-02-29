@@ -1,31 +1,3 @@
-<!-- {% extends 'layout.html' %}
-
-{% block content %}
-<div class="container mt-4">
-    <h2>Profile</h2>
-    <form action="/update-profile" method="post">
-        <div class="mb-3">
-            <label for="userName" class="form-label">Username</label>
-            <input type="text" class="form-control" id="userName" name="user_name" value="{{ profile.user_name if profile else '' }}" required>
-        </div>
-        <div class="mb-3">
-            <label for="cookingLevel" class="form-label">Cooking Level</label>
-            <select class="form-select" id="cookingLevel" name="cooking_level">
-                <option selected>{{ profile.cooking_level if profile else 'Select level' }}</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Expert">Expert</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="birthday" class="form-label">Birthday</label>
-            <input type="date" class="form-control" id="birthday" name="birthday" value="{{ profile.birthday if profile else '' }}">
-        </div>
-        <button type="submit" class="btn btn-primary">Save Profile</button>
-    </form>
-</div>
-{% endblock %} -->
-
 {% extends 'layout.html' %}
 
 {% block content %}
