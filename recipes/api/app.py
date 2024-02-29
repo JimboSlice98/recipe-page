@@ -34,10 +34,14 @@ def get_recipe_details():
         except pyodbc.Error as e:
             app.logger.error(f"Database connection failed: {e}")
 
+<<<<<<< HEAD
         try:
             cursor = conn.cursor()
         except:
             app.logger.error(f"cursors failed: {e}")
+=======
+        cursor = conn.cursor()
+>>>>>>> b17f96d1e96133e3d393510cf87ce2978df0fb99
 
         if user_id:
             # Fetch recipes for a specific user
@@ -64,7 +68,11 @@ def get_recipe_details():
         
 
         if recipes_data:
+<<<<<<< HEAD
             print(user_id, "<- use_idrecipes/api microservvice connection was succesful and pulled data", recipes_data)
+=======
+            print(user_id, "<- user_id, recipes/api microservvice connection was succesful and pulled data", recipes_data)
+>>>>>>> b17f96d1e96133e3d393510cf87ce2978df0fb99
             return jsonify(recipes_data)
         else:
             return jsonify({"error": "No data found"}), 404

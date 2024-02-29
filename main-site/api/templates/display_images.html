@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Images Gallery</title>
+</head>
+<body>
+    <h1>Images Gallery</h1>
+    {% for blog_id, urls in blob_urls_by_blog_id.items() %}
+        <h2>Blog ID: {{ blog_id }}</h2>
+        <div>
+            {% for url in urls %}
+                <img src="{{ url }}" style="height: 100px;"> <!-- Adjust styling as needed -->
+            {% endfor %}
+        </div>
+    {% endfor %}
+</body>
+</html>
