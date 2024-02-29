@@ -45,8 +45,8 @@ def get_user_details():
         # cursor.execute(query)
         rows = cursor.fetchall()
 
-        for row in rows:
-            print(row)
+        # for row in rows:
+        #     print(row)
         
         # users_details = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
         users_details = [
@@ -77,17 +77,20 @@ def get_user_details():
 
 @app.route("/update-user-details", methods=["POST"])
 def update_user_details():
-    user_id = request.args.get("UserID")  # Ensure the case matches the database schema
+    # Assuming JSON payload, use request.json to access the data
+    data = request.json
+
+    user_id = data.get("UserID")  # Access UserID from the JSON payload
     if not user_id:
         return jsonify({"error": "UserID is required"}), 400
 
     # Dictionary to hold the fields to update
     fields_to_update = {}
 
-    # Check for each field in the request's query parameters
+    # Check for each field in the provided JSON data
     for field in ['Email', 'DisplayName', 'CookingLevel', 'FavoriteCuisine', 'ShortBio', 'ProfilePictureUrl', 'PersonalWebsite', 'Location']:
-        if request.args.get(field):
-            fields_to_update[field] = request.args.get(field)
+        if field in data:  # Check if the field exists in the JSON payload
+            fields_to_update[field] = data[field]
     
     # If no fields are provided to update, return an error
     if not fields_to_update:
@@ -95,25 +98,26 @@ def update_user_details():
     
     # Construct the UPDATE statement dynamically based on the fields provided
     update_parts = [f"{field} = ?" for field in fields_to_update.keys()]
-    update_statement = f"UPDATE user_details_complete SET {', '.join(update_parts)} WHERE UserID = ?"
+    update_statement = f"UPDATE user_details SET {', '.join(update_parts)} WHERE UserID = ?"
 
     # Parameters for the UPDATE statement
     update_params = list(fields_to_update.values()) + [user_id]
 
     try:
         conn_str = (
-            f"Driver={{{os.environ['USER_DETAILS_DRIVER']}}};"
-            f"Server={os.environ['USER_DETAILS_SERVER']};"
-            f"Database={os.environ['USER_DETAILS_DATABASE']};"
-            f"UID={os.environ['USER_DETAILS_USERNAME']};"
-            f"PWD={os.environ['USER_DETAILS_PASSWORD']};"
+            f"Driver={{{os.environ.get('USER_DETAILS_DRIVER')}}};"
+            f"Server={os.environ.get('USER_DETAILS_SERVER')};"
+            f"Database={os.environ.get('USER_DETAILS_DATABASE')};"
+            f"UID={os.environ.get('USER_DETAILS_USERNAME')};"
+            f"PWD={os.environ.get('USER_DETAILS_PASSWORD')};"
         )
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
 
         # Execute the UPDATE statement
         cursor.execute(update_statement, update_params)
-        conn.commit()  # Commit the changes to the database
+        # Commit the changes to the database
+        conn.commit()  
 
         if cursor.rowcount == 0:
             return jsonify({"error": "No user found with the provided UserID or no changes made"}), 404
@@ -127,7 +131,6 @@ def update_user_details():
     finally:
         cursor.close()
         conn.close()
-
 
 @app.route("/", methods=["GET"])
 def root():
