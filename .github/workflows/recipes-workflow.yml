@@ -53,7 +53,7 @@ jobs:
               --name sse-recipes-container \
               --image SSERecipeContainers.azurecr.io/sse-recipes-container:latest \
               --dns-name-label sse-recipes \
-              --ports 5000 6000 1433 \
+              --ports 5000 5001 1433 \
               --registry-login-server SSERecipeContainers.azurecr.io \
               --registry-username ${{ secrets.ACR_USERNAME }} \
               --registry-password ${{ secrets.ACR_PASSWORD }} \
