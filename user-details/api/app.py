@@ -63,7 +63,6 @@ def get_user_details():
             } for row in rows
         ]
 
-
         if users_details:
             print(users_details)
             return jsonify(users_details)
@@ -75,62 +74,60 @@ def get_user_details():
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
+
 @app.route("/update-user-details", methods=["POST"])
 def update_user_details():
-    # Assuming JSON payload, use request.json to access the data
+    print("received a request to update_user_details in user-details")
     data = request.json
+    print("here is the data", data)
 
-    user_id = data.get("UserID")  # Access UserID from the JSON payload
+    user_id = data.get("UserID")
     if not user_id:
         return jsonify({"error": "UserID is required"}), 400
 
-    # Dictionary to hold the fields to update
-    fields_to_update = {}
+    # Convert UserID to int if it's not None and is a digit
+    try:
+        user_id = int(user_id) if user_id and str(user_id).isdigit() else None
+    except ValueError:
+        return jsonify({"error": "UserID must be a valid integer"}), 400
 
-    # Check for each field in the provided JSON data
-    for field in ['Email', 'DisplayName', 'CookingLevel', 'FavoriteCuisine', 'ShortBio', 'ProfilePictureUrl', 'PersonalWebsite', 'Location']:
-        if field in data:  # Check if the field exists in the JSON payload
-            fields_to_update[field] = data[field]
-    
-    # If no fields are provided to update, return an error
+    fields_to_update = {field: data[field] for field in ['Email', 'DisplayName', 'CookingLevel', 'FavoriteCuisine', 'ShortBio', 'ProfilePictureUrl', 'PersonalWebsite', 'Location'] if field in data}
+
     if not fields_to_update:
         return jsonify({"error": "No fields provided for update"}), 400
-    
-    # Construct the UPDATE statement dynamically based on the fields provided
-    update_parts = [f"{field} = ?" for field in fields_to_update.keys()]
-    update_statement = f"UPDATE user_details SET {', '.join(update_parts)} WHERE UserID = ?"
 
-    # Parameters for the UPDATE statement
+    update_parts = [f"{field} = ?" for field in fields_to_update]
+    update_statement = f"UPDATE user_details_complete SET {', '.join(update_parts)} WHERE UserID = ?"
+    print(update_statement)
+
     update_params = list(fields_to_update.values()) + [user_id]
+    print(update_params)
 
     try:
-        conn_str = (
-            f"Driver={{{os.environ.get('USER_DETAILS_DRIVER')}}};"
-            f"Server={os.environ.get('USER_DETAILS_SERVER')};"
-            f"Database={os.environ.get('USER_DETAILS_DATABASE')};"
-            f"UID={os.environ.get('USER_DETAILS_USERNAME')};"
-            f"PWD={os.environ.get('USER_DETAILS_PASSWORD')};"
-        )
+        conn_str = f"Driver={{{os.environ['USER_DETAILS_DRIVER']}}};Server={os.environ['USER_DETAILS_SERVER']};Database={os.environ['USER_DETAILS_DATABASE']};UID={os.environ['USER_DETAILS_USERNAME']};PWD={os.environ['USER_DETAILS_PASSWORD']};"
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
+        print("Connected to the database successfully.")
 
-        # Execute the UPDATE statement
         cursor.execute(update_statement, update_params)
-        # Commit the changes to the database
-        conn.commit()  
+        conn.commit()
+
+        print(f"Executed the update statement: {update_statement}")
+        print(f"With parameters: {update_params}")
+        print(f"Rows affected: {cursor.rowcount}")
 
         if cursor.rowcount == 0:
             return jsonify({"error": "No user found with the provided UserID or no changes made"}), 404
         else:
             return jsonify({"success": "User details updated successfully"}), 200
-
     except pyodbc.Error as e:
+        print(f"Database error: {str(e)}")
         return jsonify({"error": "Database error", "details": str(e)}), 500
-    except Exception as e:
-        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 @app.route("/", methods=["GET"])
 def root():
