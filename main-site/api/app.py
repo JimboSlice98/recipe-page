@@ -617,10 +617,10 @@ def update_profile():
     print("in udpate profule the payload", payload)
     
     # The URL of the microservice endpoint
-    # microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/update-user-details'
+    microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/update-user-details'
     
     # this is for testing in live environment
-    microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:6000/update-user-details'
+    # microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:6000/update-user-details'
     # microservice_url = 'http://127.0.0.1:5000/update-user-details'
     
     try:
