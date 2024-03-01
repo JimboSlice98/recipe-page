@@ -1,126 +1,193 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-{% if profile %}
-    <div class="card mb-3">
+<div class="container profile-page tx-13">
+  <div class="row">
+    <div class="col-12 grid-margin">
+      {% if profile %}
+      <div class="card rounded mb-4">
         <div class="card-body">
-            <h3 class="card-title">Profile Info</h3>
-            <p class="card-text"><strong>User ID:</strong> {{ profile.user_id }}</p>
-            <p class="card-text"><strong>Name:</strong> {{ profile.display_name }}</p>
-            <p class="card-text"><strong>Cooking Ability:</strong> {{ profile.cooking_level }}</p>
-            <p class="card-text"><strong>Favorite Cuisine:</strong> {{ profile.favorite_cuisine }}</p>
-            <p class="card-text"><strong>Location:</strong> {{ profile.location }}</p>
-            <p class="card-text"><strong>Bio:</strong> {{ profile.short_bio }}</p>
-        </div>
-    </div>
-{% else %}
-    <p>No profile information available. Please update your profile.</p>
-{% endif %}
-
-
-<!-- Add AI Recipe Prompt Form -->
-<div class="card my-4">
-    <div class="card-body">
-        <h3 class="card-title">Ask AI for a Recipe</h3>
-        <div class="input-group mb-3">
-            <input type="text" id="ai-prompt" class="form-control" placeholder="Enter your recipe request...">
-            <button class="btn btn-secondary" type="button" onclick="askAI()">AI</button>
-        </div>
-    </div>
-</div>
-
-<!-- Add Recipe Form -->
-<div class="card my-4">
-    <div class="card-body">
-        <h3 class="card-title">Add New Recipe</h3>
-        <form id="add-recipe-form" class="rounded border p-3" style="background-color: #f8f9fa;">
-            <div class="mb-3">
-                <label for="recipe-title" class="form-label">Title</label>
-                <input type="text" class="form-control form-control-lg" id="recipe-title" placeholder="Enter recipe title" required>
+          <h3 class="card-title text-center mb-4">Profile Info</h3>
+          <div class="row">
+            <!-- Left column for user_id, name, and bio -->
+            <div class="col-md-6">
+              <h4><strong>ID:</strong> {{ profile.user_id }}</h4>
+              <h5><strong>Name:</strong> {{ profile.display_name }}</h5>
+              <p><strong>Bio:</strong> {{ profile.short_bio }}</p>
             </div>
+            <!-- Right column for cooking ability, favorite cuisine, and location -->
+            <div class="col-md-6">
+              <p><strong>Cooking Ability:</strong> {{ profile.cooking_level }}</p>
+              <p><strong>Favorite Cuisine:</strong> {{ profile.favorite_cuisine }}</p>
+              <p><strong>Location:</strong> {{ profile.location }}</p>
+            </div>
+          </div>
+        </div>
+      </div>      
+      {% else %}
+        <p>No profile information available. Please update your profile.</p>
+      {% endif %}
+    </div>
+  </div>
+<!-- Recipe Section -->
+<div class="row justify-content-center profile-body">
+    <!-- Main content column -->
+    <div class="col-12 col-lg-8">
+      <!-- Toggleable Add Recipe Container -->
+      <div class="card rounded mb-3">
+        <div class="card-header" role="tab">
+          <h6 class="mb-0" style="font-size: 1.5rem; font-weight: bold;">
+            <a class="text-decoration-none" data-bs-toggle="collapse" href="#addRecipeCollapse" aria-expanded="true" aria-controls="addRecipeCollapse">
+              Add Recipe Here
+            </a>
+          </h6>
+        </div>
+        <div id="addRecipeCollapse" class="collapse" role="tabpanel">
+          <div class="card-body">
+            <!-- AI Recipe Prompt Form -->
             <div class="mb-3">
+              <h6 class="card-title">Ask AI for a Recipe</h6>
+              <div class="input-group">
+                <input type="text" id="ai-prompt" class="form-control" placeholder="Enter your recipe request...">
+                <button class="btn btn-secondary" type="button" onclick="askAI()">AI</button>
+              </div>
+            </div>
+            <!-- Add Recipe Form -->
+            <h6 class="card-title">Add New Recipe</h6>
+            <form id="add-recipe-form">
+              <div class="mb-3">
+                <label for="recipe-title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="recipe-title" placeholder="Enter recipe title" required>
+              </div>
+              <div class="mb-3">
                 <label for="recipe-ingredients" class="form-label">Ingredients</label>
                 <textarea class="form-control" id="recipe-ingredients" rows="3" placeholder="List ingredients here" required></textarea>
-            </div>
-            <div class="mb-3">
+              </div>
+              <div class="mb-3">
                 <label for="recipe-steps" class="form-label">Steps</label>
                 <textarea class="form-control" id="recipe-steps" rows="5" placeholder="Describe the steps here" required></textarea>
-            </div>
-            <button type="button" class="btn btn-primary" onclick="addRecipe()">Add Recipe</button>
-        </form>
-    </div>
-</div>
+              </div>
+              <button type="button" class="btn btn-primary" onclick="addRecipe()">Add Recipe</button>
+            </form>
+          </div>
+        </div>
+      </div>
 
-{% if blogs %}
-    {% for blog_id, blog in blogs.items() %}
-        <div class="card mb-3">
+     <!-- Recipe Section -->
+  <div class="row justify-content-center profile-body">
+    <!-- Main content column -->
+    <div class="col-12 col-lg-10">
+      {% if blogs %}
+        {% for blog_id, blog in blogs.items() %}
+          <div class="card rounded mb-4">
             <div class="card-body">
-                <h5 class="card-title">{{ blog.blog_name }}</h5>
-                <!-- Image gallery for this blog -->
-                <div class="container">
-                    <div class="row">
-                        {% if images_by_blog.get(blog_id) %}
-                            {% for image_url in images_by_blog[blog_id][blog_id] %}
-                                <div class="col">
-                                    <div class="position-relative">
-                                        <img src="{{ image_url }}" alt="Blog image" class="img-fluid rounded" style="max-height: 150px; width: auto;">
-                                        <form action="{{ url_for('delete_image') }}" method="post" class="position-absolute" style="top: 0; right: 0;">
-                                            <input type="hidden" name="blob_url" value="{{ image_url }}">
-                                            <button type="submit" class="btn btn-danger btn-sm">&times;</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                </div>
-                                
-                <div class="mb-3">
-                    <form action="{{ url_for('upload_image') }}" method="post" enctype="multipart/form-data">
-                        <input type="hidden" name="user_id" value="{{ blog.user_id }}">
-                        <input type="hidden" name="blog_id" value="{{ blog_id }}">
-                        <input type="file" name="image" required>
-                        <button type="submit" class="btn btn-primary">Upload Image</button>
-                    </form>
-                </div>
-                <p class="card-text"><strong>User: </strong>{{ blog.user_id }}</p>
-                <p class="card-text"><strong>Ingredients:</strong> {{ blog.recipe_ingredients }}</p>
-                <p class="card-text"><strong>Steps:</strong> {{ blog.recipe_steps }}</p>
-                <button class="btn btn-outline-danger" type="button" onclick="toggleHeart(this)">
-                    <svg id="heart-{{ blog_id }}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
-                        <path d="m8 2.748-.717-.737C5.6.281 2.546 1.48 1.051 3.99.286 5.686 0 7.25 0 8.816c0 1.566.286 3.131 1.051 4.826C2.546 12.853 5.6 14.52 7.283 15.25c1.684.73 3.368.75 4.717 0 1.684-.73 3.368-1.897 4.717-3.434 1.349-1.537 2.032-3.103 2.032-4.669 0-1.566-.683-3.131-2.032-4.826-1.349-1.695-3.034-3.362-4.717-4.092C11.368 2.019 9.684 2 8 2.748z"/>
-                    </svg>
-                </button>
-                {% if comments.get(blog_id) %}
-                    {% for comment_id, comment in comments[blog_id].items() %}
-                        <div class="card mb-3 ml-5">
-                            <div class="card-body">
-                                <p class="card-text">{{ comment.user_id }}</p>
-                                <p class="card-text">{{ comment.comment_string }}</p>
-                            </div>
+              <h5 class="card-title" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_name }}</h5>
+              <!-- Image gallery for this blog -->
+              {% if images_by_blog.get(blog_id) %}
+                <div id="carouselBlog-{{ blog_id }}" class="carousel slide" data-bs-ride="carousel">
+                  <!-- Carousel Inner -->
+                  <div class="carousel-inner">
+                    {% for image_url in images_by_blog[blog_id][blog_id] %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <div class="position-relative">
+                          <!-- Carousel Image -->
+                          <img src="{{ image_url }}" class="d-block w-100" alt="..." style="height: auto; max-height: 500px; object-fit: contain;" data-bs-toggle="modal" data-bs-target="#modal-{{ blog_id }}-{{ loop.index0 }}">
+          
+                          <!-- Delete Button -->
+                          <form action="{{ url_for('delete_image') }}" method="post" class="position-absolute" style="top: 0; right: 0; z-index: 2;">
+                            <input type="hidden" name="blob_url" value="{{ image_url }}">
+                            <button type="submit" class="btn btn-danger btn-sm">&times;</button>
+                          </form>
                         </div>
+                      </div>
                     {% endfor %}
-                {% endif %}
-                <!-- add a comment -->
-                <div class="mb-3">
-                    <form class="d-flex justify-content-between align-items-center">
-                        <input class="form-control me-2" type="text" placeholder="Add a comment...">
-                        <button class="btn btn-outline-primary" type="submit">Comment</button>
-                    </form>
+                  </div>
+
+                  <!-- Carousel Controls -->
+                  <a class="carousel-control-prev" href="#carouselBlog-{{ blog_id }}" role="button" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  </a>
+                  <a class="carousel-control-next" href="#carouselBlog-{{ blog_id }}" role="button" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  </a>
                 </div>
+                
+                <!-- Modals for each image -->
+                {% for image_url in images_by_blog[blog_id][blog_id] %}
+                  <div class="modal fade" id="modal-{{ blog_id }}-{{ loop.index0 }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-body">
+                          <img src="{{ image_url }}" class="img-fluid" alt="...">
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
+
+              <!-- Image Upload and View Recipe Details Button -->
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <!-- Upload Image Form -->
+                <form action="{{ url_for('upload_image') }}" method="post" enctype="multipart/form-data" class="me-2">
+                  <input type="hidden" name="user_id" value="{{ blog.user_id }}">
+                  <input type="hidden" name="blog_id" value="{{ blog_id }}">
+                  <input type="file" name="image" required>
+                  <button type="submit" class="btn btn-primary">Upload Image</button>
+                </form>
+
+                <!-- View Recipe Button -->
+                <button class="btn btn-outline-secondary" data-bs-toggle="collapse" href="#collapseRecipe-{{ blog_id }}">
+                  View Recipe Details
+                </button>
+              </div>
+
+              <!-- Collapsible Recipe Ingredients and Steps -->
+              <div class="collapse" id="collapseRecipe-{{ blog_id }}">
+                <div class="card card-body mt-2">
+                  <p class="card-text"><strong>Ingredients:</strong> {{ blog.recipe_ingredients }}</p>
+                  <p class="card-text"><strong>Steps:</strong> {{ blog.recipe_steps }}</p>
+                </div>
+              </div>
+
+              
+              <!-- Like Button -->              
+              <button class="btn btn-outline-danger" type="button" onclick="toggleHeart(this)">
+                <svg id="heart-{{ blog_id }}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
+                    <path d="m8 2.748-.717-.737C5.6.281 2.546 1.48 1.051 3.99.286 5.686 0 7.25 0 8.816c0 1.566.286 3.131 1.051 4.826C2.546 12.853 5.6 14.52 7.283 15.25c1.684.73 3.368.75 4.717 0 1.684-.73 3.368-1.897 4.717-3.434 1.349-1.537 2.032-3.103 2.032-4.669 0-1.566-.683-3.131-2.032-4.826-1.349-1.695-3.034-3.362-4.717-4.092C11.368 2.019 9.684 2 8 2.748z"/>
+                </svg>
+              </button>
+
+              <!-- Comments section -->
+              {% if comments.get(blog_id) %}
+                <div class="comments-section">
+                  {% for comment_id, comment in comments[blog_id].items() %}
+                    <div class="comment mb-2">
+                      <strong>{{ comment.user_id }} says:</strong> "{{ comment.comment_string }}"
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <!-- Add a comment form -->
+              <form class="d-flex justify-content-between align-items-center mt-3">
+                <input class="form-control me-2" type="text" placeholder="Add a comment...">
+                <button class="btn btn-outline-primary" type="submit">Comment</button>
+              </form>
             </div>
-        </div>        
-    {% endfor %}
-{% else %}
-    <!-- <p>JUST FOR TESTING</p>
-    <p>Error: {{ error }}</p> -->
-    <div class="text-center my-5">
-        <img src="path_to_your_cartoon_image_of_food" alt="No recipes found" class="img-fluid" style="max-width: 200px;">
-        <h3 class="mt-3">No Recipes Found</h3>
-        <p class="text-muted">We couldn't find any recipes for this user. Try searching for something else!</p>
-        <a class="btn btn-primary" href="/home">Go Back</a>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center my-5">
+          <img src="path_to_your_cartoon_image_of_food" alt="No recipes found" class="img-fluid" style="max-width: 200px;">
+          <h3 class="mt-3">No Recipes Found</h3>
+          <p class="text-muted">We couldn't find any recipes for this user. Try searching for something else!</p>
+          <a class="btn btn-primary" href="/home">Go Back</a>
+        </div>
+      {% endif %}
     </div>
-{% endif %}
+  </div>
+</div>
 
 <script>
 function toggleHeart(button) {
@@ -171,5 +238,62 @@ function askAI() {
     .catch(error => console.error('Error:', error));
 }
 </script>
-{% endblock %}
 
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.bundle.min.js"></script>
+
+<style>
+.carousel-inner {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+  }
+  
+  .carousel-item {
+    width: 100%; /* You can adjust this value */
+    flex: 0 0 auto;
+  }
+  
+  .carousel-control-prev, .carousel-control-next {
+    width: 5%;
+  }
+  
+  .modal-dialog {
+    max-width: 80%;
+  }
+  
+  .modal-body {
+    text-align: center; /* Center modal images */
+  }
+  
+  .modal-content {
+    background: transparent;
+    border: none;
+  }
+  .carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-image: none; /* Remove the default background images */
+}
+
+.carousel-control-prev-icon:after,
+.carousel-control-next-icon:after {
+  content: ''; /* Add a new 'after' pseudo-element for the arrow */
+  display: inline-block;
+  background: darkgray; /* Change to your desired color */
+  width: 20px; /* Width of the arrow */
+  height: 20px; /* Height of the arrow */
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.carousel-control-prev-icon:after {
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23666666" viewBox="0 0 8 8"><path d="M4.5 0L3 1.5l2.5 2.5L3 6.5 4.5 8l4-4-4-4z" transform="rotate(180 4 4)"/></svg>');
+}
+
+.carousel-control-next-icon:after {
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23666666" viewBox="0 0 8 8"><path d="M4.5 0L3 1.5l2.5 2.5L3 6.5 4.5 8l4-4-4-4z"/></svg>');
+}
+
+</style>
+{% endblock %}
