@@ -35,6 +35,7 @@ try:
     openai.api_key = os.getenv("OPENAI_API_KEY")
 except:
     openai.api_key = None
+    
 
 def get_recipe_from_prompt(user_input):
     # Only use this when we need it, as charging per request
