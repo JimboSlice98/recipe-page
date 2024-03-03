@@ -40,7 +40,7 @@
         const params = new URLSearchParams(window.location.search);
         const userId = params.get('user_id') || '1'; // Default to '1' if not found, adjust as needed
     
-        // Append 'user_id' to the home and profile button links
+        // Append 'user_id' to the home, profile, and messages button links
         const homeLink = document.querySelector('.home-link');
         if (homeLink) {
             homeLink.setAttribute('href', `/home?user_id=${userId}`);
@@ -49,6 +49,12 @@
         const profileButton = document.querySelector('.profile-button');
         if (profileButton) {
             profileButton.setAttribute('href', `/profile?user_id=${userId}`);
+        }
+
+        // Update for Messages button
+        const messagesButton = document.querySelector('a[href="/messages"]');
+        if (messagesButton) {
+            messagesButton.setAttribute('href', `/messages?user_id=${userId}`);
         }
     });
 </script>
