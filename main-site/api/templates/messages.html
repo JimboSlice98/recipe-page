@@ -1,3 +1,6 @@
+{% extends 'layout.html' %}
+
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +13,13 @@
     <div class="container mt-5">
         <div class="row">
             <div class="col-md-4">
+                <!-- Search box for starting a new chat -->
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Enter user_id to chat" id="new-chat-user-id" aria-label="Recipient's user_id">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="start-new-chat">Start Chat</button>
+                    </div>
+                </div>
                 <div id="user-list" class="list-group">
                     <!-- Dynamically populate user list -->
                     {% for other_user_id in conversations %}
@@ -43,6 +53,28 @@
                 });
             });
         }
+        $('#start-new-chat').click(function() {
+            let newChatUserID = $('#new-chat-user-id').val();
+            let currentUserID = $('#current-user-id').val();
+
+            // Optionally insert a default blank message or just create a chat entry
+            $.ajax({
+                url: '/start_chat',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    'user_id1': currentUserID,
+                    'user_id2': newChatUserID,
+                    'message': '', // You might opt to not send a message
+                    'sender': currentUserID
+                }),
+                success: function(response) {
+                    // After starting the chat, reload the page or just the user list
+                    // Here, for simplicity, I'll just reload the page to reflect the new chat
+                    location.reload();
+                }
+            });
+        });
        $(document).ready(function() {
             // Updated JavaScript functionality to handle dynamic loading of conversations
             $('#user-list a').click(function(e) {
@@ -81,3 +113,6 @@
     </script>
 </body>
 </html>
+
+
+{% endblock %}

@@ -148,6 +148,14 @@ def get_user_messages(user_id1, user_id2):
         ]
     return jsonify(messages_list), 200
 
+@app.route('/start_chat', methods=['POST'])
+def start_chat():
+    message_data = request.json
+    # Inserts a blank message into the table for a new chat
+    insert_message(message_data) 
+    return jsonify({'status': 'success', 'message': 'Chat started'}), 200
+
+
 @app.route('/messages', methods=['GET'])
 def get_messages():   
     user_id = request.args.get('user_id', 1, type=int)  # Default to 1 if not specified
