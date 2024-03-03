@@ -42,29 +42,31 @@ except:
 
 
 # Construct the database URL from environment variables
-DATABASE_URL = (
-    f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@"
-    f"{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}?sslmode={os.environ['DB_SSLMODE']}"
-)
+try:
+    DATABASE_URL = (
+        f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@"
+        f"{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}?sslmode={os.environ['DB_SSLMODE']}"
+    )
 
-# Define the messages table structure
-metadata = MetaData()
-messages = Table('messages', metadata,
-                 Column('chat_id', Integer, primary_key=True),
-                 Column('user_id1', Integer),
-                 Column('user_id2', Integer),
-                 Column('message', Text),
-                 Column('sender', Integer),
-                 Column('time_stamp', Text) 
-                )
+    # Define the messages table structure
+    metadata = MetaData()
+    messages = Table('messages', metadata,
+                    Column('chat_id', Integer, primary_key=True),
+                    Column('user_id1', Integer),
+                    Column('user_id2', Integer),
+                    Column('message', Text),
+                    Column('sender', Integer),
+                    Column('time_stamp', Text) 
+                    )
 
-# Create an engine and bind it to the metadata
-engine = create_engine(DATABASE_URL)
-metadata.bind = engine
+    # Create an engine and bind it to the metadata
+    engine = create_engine(DATABASE_URL)
+    metadata.bind = engine
 
-# Create a configured "Session" class
-Session = sessionmaker(bind=engine)
-
+    # Create a configured "Session" class
+    Session = sessionmaker(bind=engine)
+except:
+    print("Database connection failed")
 
 def insert_message(message_data):
     session = Session()
@@ -93,7 +95,7 @@ def get_ordered_messages(user_ids):
                 (messages.c.user_id1 == user_id1) & (messages.c.user_id2 == user_id2),
                 (messages.c.user_id1 == user_id2) & (messages.c.user_id2 == user_id1)
             )
-        ).order_by(messages.c.time_stamp.desc())
+        ).order_by(messages.c.time_stamp.asc())
         
         # Execute the query and fetch all results
         result = session.execute(query).fetchall()
@@ -108,13 +110,20 @@ def get_ordered_messages(user_ids):
 
 def get_user_id_conversations(user_id1):
     session = Session()
-    print("HERE:")
     
     try:
-        # First, create a subquery to find the latest message for each conversation involving user_id1
-        query = select(distinct(messages.c.user_id2)).where(
-            messages.c.user_id1 == user_id1
-        )
+        # # First, create a subquery to find the latest message for each conversation involving user_id1
+        # query = select(distinct(messages.c.user_id2)).where(
+        #     messages.c.user_id1 == user_id1
+        # )
+
+        # Create a union of two queries to get all user_ids that have a conversation with user_id1
+        # One where user_id1 is the sender and one where user_id1 is the receiver
+        subquery1 = select(messages.c.user_id2).where(messages.c.user_id1 == user_id1).distinct()
+        subquery2 = select(messages.c.user_id1).where(messages.c.user_id2 == user_id1).distinct()
+
+        # Combine both subqueries to get a complete list of user_ids
+        query = subquery1.union(subquery2)
 
         result = session.execute(query).fetchall()
 
@@ -161,7 +170,7 @@ def get_messages():
     user_id = request.args.get('user_id', 1, type=int)  # Default to 1 if not specified
     conversations = get_user_id_conversations(user_id)
     return render_template("messages.html", user_id=user_id, conversations=conversations)
-    
+
 
 def get_recipe_from_prompt(user_input):
     # Only use this when we need it, as charging per request
