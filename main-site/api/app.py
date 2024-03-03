@@ -21,6 +21,10 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from azure.data.tables import TableServiceClient, TableClient
 
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Text,  DateTime, select, or_, func, distinct
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
+
 load_dotenv()
 from openai import OpenAI
 import openai
@@ -35,6 +39,120 @@ try:
     openai.api_key = os.getenv("OPENAI_API_KEY")
 except:
     openai.api_key = None
+
+
+# Construct the database URL from environment variables
+DATABASE_URL = (
+    f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@"
+    f"{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}?sslmode={os.environ['DB_SSLMODE']}"
+)
+
+# Define the messages table structure
+metadata = MetaData()
+messages = Table('messages', metadata,
+                 Column('chat_id', Integer, primary_key=True),
+                 Column('user_id1', Integer),
+                 Column('user_id2', Integer),
+                 Column('message', Text),
+                 Column('sender', Integer),
+                 Column('time_stamp', Text) 
+                )
+
+# Create an engine and bind it to the metadata
+engine = create_engine(DATABASE_URL)
+metadata.bind = engine
+
+# Create a configured "Session" class
+Session = sessionmaker(bind=engine)
+
+
+def insert_message(message_data):
+    session = Session()
+    try:
+        # Insert the message into the database
+        new_message = messages.insert().values(**message_data)
+        session.execute(new_message)
+        session.commit()
+        print(f"Inserted message from user {message_data['user_id1']} to user {message_data['user_id2']}")
+    except SQLAlchemyError as e:
+        print(f"An error occurred: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
+def get_ordered_messages(user_ids):
+    # Create a session
+    session = Session()
+    
+    try:
+        user_id1, user_id2 = user_ids[0], user_ids[1]
+
+        # Create a select query
+        query = select(messages).where(
+            or_(
+                (messages.c.user_id1 == user_id1) & (messages.c.user_id2 == user_id2),
+                (messages.c.user_id1 == user_id2) & (messages.c.user_id2 == user_id1)
+            )
+        ).order_by(messages.c.time_stamp.desc())
+        
+        # Execute the query and fetch all results
+        result = session.execute(query).fetchall()
+        
+        # Convert result to a list 
+        ordered_messages = list(result)
+        
+        return ordered_messages
+    finally:
+        # Close the session
+        session.close()   
+
+def get_user_id_conversations(user_id1):
+    session = Session()
+    print("HERE:")
+    
+    try:
+        # First, create a subquery to find the latest message for each conversation involving user_id1
+        query = select(distinct(messages.c.user_id2)).where(
+            messages.c.user_id1 == user_id1
+        )
+
+        result = session.execute(query).fetchall()
+
+        # Extract other_user_id from each row in the result set
+        user_ids = [a_result[0] for a_result in result]
+        
+        return user_ids
+    finally:
+        session.close()
+
+@app.route('/post_message', methods=['POST'])
+def post_message():
+    message_data = request.json
+    insert_message(message_data)
+    return jsonify({'status': 'success', 'status_code': 200}), 200
+
+@app.route('/get_messages/<int:user_id1>/<int:user_id2>', methods=['GET'])
+def get_user_messages(user_id1, user_id2):
+    messages = get_ordered_messages([user_id1, user_id2])
+    messages_list = [
+            {
+                'chat_id': message[0],
+                'user_id1': message[1],
+                'user_id2': message[2],
+                'message': message[3],
+                'sender': message[4],
+                # Convert datetime to a string format, e.g., ISO format
+                'time_stamp': message[5].isoformat() if isinstance(message[5], datetime) else message[5]
+            }
+            for message in messages
+        ]
+    return jsonify(messages_list), 200
+
+@app.route('/messages', methods=['GET'])
+def get_messages():   
+    user_id = request.args.get('user_id', 1, type=int)  # Default to 1 if not specified
+    conversations = get_user_id_conversations(user_id)
+    return render_template("messages.html", user_id=user_id, conversations=conversations)
     
 
 def get_recipe_from_prompt(user_input):
@@ -784,3 +902,25 @@ def test():
 
 # if __name__ == '__main__':
 #     app.run(debug=True)
+    
+# # Example usage
+if __name__ == "__main__":
+#     # Dummy data for insertion
+#     # dummy_data = [
+#     #     {'user_id1': 1, 'user_id2': 2, 'message': 'Hey there!', 'sender': 1},
+#     #     {'user_id1': 2, 'user_id2': 1, 'message': 'Hello!', 'sender': 2},
+#     #     {'user_id1': 1, 'user_id2': 3, 'message': 'How are you doing?', 'sender': 1},
+#     #     {'user_id1': 2, 'user_id2': 3, 'message': 'Good morning!', 'sender': 2},
+#     #     {'user_id1': 3, 'user_id2': 1, 'message': 'Good night!', 'sender': 3}
+#     # ]
+
+#     # # Insert each message
+#     # for data in dummy_data:
+#     #     insert_message(data)
+
+#     user_ids = [1, 2]
+
+#     for message in get_ordered_messages(user_ids):
+#         print(message)
+    a = get_user_id_conversations(1)
+    print(a)

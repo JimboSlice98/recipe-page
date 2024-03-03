@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-4">
+                <div id="user-list" class="list-group">
+                    <!-- Dynamically populate user list -->
+                    {% for other_user_id in conversations %}
+                    <a href="#" class="list-group-item list-group-item-action" data-userid="{{ other_user_id }}">{{ other_user_id }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div id="message-container" class="border rounded p-4">
+                    <!-- Messages will be shown here -->
+                </div>
+                <form id="message-form" class="form-inline mt-4">
+                    <input type="hidden" id="current-user-id" value="{{ user_id }}">
+                    <input type="hidden" id="other-user-id">
+                    <input type="text" id="message" class="form-control flex-grow-1" placeholder="Type a message..." required>
+                    <button type="submit" class="btn btn-primary ml-2">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        function loadMessages(currentUserID, otherUserID) {
+            $.get(`/get_messages/${currentUserID}/${otherUserID}`, function(data) {
+                $('#message-container').empty();
+                data.forEach(function(message) {
+                    let messageClass = message.sender === parseInt(currentUserID) ? 'text-right' : 'text-left';
+                    let messageDiv = `<div class="${messageClass}"><p>${message.message}</p></div>`;
+                    $('#message-container').append(messageDiv);
+                });
+            });
+        }
+       $(document).ready(function() {
+            // Updated JavaScript functionality to handle dynamic loading of conversations
+            $('#user-list a').click(function(e) {
+                e.preventDefault();
+                let currentUserID = $('#current-user-id').val();
+                let otherUserID = $(this).data('userid');
+                $('#other-user-id').val(otherUserID); // Update hidden input
+                
+                loadMessages(currentUserID, otherUserID); // Call loadMessages with both user IDs
+            });
+            
+            // Handle form submission to send a message
+            $('#message-form').submit(function(event) {
+                event.preventDefault();
+                let messageText = $('#message').val();
+                let currentUserID = $('#current-user-id').val(); // Correctly get currentUserID
+                let otherUserID = $('#other-user-id').val(); // Correctly get otherUserID
+
+                $.ajax({
+                    url: '/post_message',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        'user_id1': currentUserID,
+                        'user_id2': otherUserID,
+                        'message': messageText,
+                        'sender': currentUserID
+                    }),
+                    success: function(response) {
+                        $('#message').val(''); // Clear the input field
+                        loadMessages(currentUserID, otherUserID); // Reload messages
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
