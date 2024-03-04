@@ -16,7 +16,6 @@ from azure.data.tables import TableServiceClient, TableClient
 
 load_dotenv()
 
-
 # Database class to handle contacting Message
 from api.helpers.helper_db_messages import MessagesDatabaseManager 
 
