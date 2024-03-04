@@ -22,21 +22,28 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Create and start virtual environment
+      - name: Install dependencies and list packages
         run: |
           python -m venv venv
           source venv/bin/activate
-        working-directory: main-site/api
-       
-      - name: Install dependencies in api
-        run: pip install -r requirementscopy.txt
-        working-directory: main-site/api
-
-      - name: List installed pip packages
-        run: |
-          source venv/bin/activate
+          pip install -r main-site/api/requirementscopy.txt
           pip list
-        working-directory: main-site/api
+      
+      # - name: Create and start virtual environment
+      #   run: |
+      #     python -m venv venv
+      #     source venv/bin/activate
+      #   working-directory: main-site/api
+       
+      # - name: Install dependencies in api
+      #   run: pip install -r requirementscopy.txt
+      #   working-directory: main-site/api
+
+      # - name: List installed pip packages
+      #   run: |
+      #     source venv/bin/activate
+      #     pip list
+      #   working-directory: main-site/api
 
       - name: Install dependencies
         run: pip install -r main-site/requirements.txt
