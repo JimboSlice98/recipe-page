@@ -651,6 +651,13 @@ def test():
         )
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
+
+        #stack overflow troubleshooting
+        #https://stackoverflow.com/questions/50046158/pyodbc-login-timeout-error
+        #https://stackoverflow.com/questions/56053724/microsoftodbc-driver-17-for-sql-serverlogin-timeout-expired-0-sqldriverco
+        #connection = pyodbc.connect("DRIVER={ODBC Driver 17 for SQL Server};SERVER=myserver;DATABASE=mydb;UID=myuser;PWD=mypassword", autocommit=True)
+
+        
         
         # if user_id:
         #     query = "SELECT * FROM "User""
