@@ -199,12 +199,14 @@ def filter_blogs_by_user(user_id, blog_data):
             blog_ids.append(blog_id)
     return filtered_blogs, blog_ids
 
+
 def filter_comments_by_blog_ids(blog_ids, comment_data):
     filtered_comments = {}
     for blog_id in blog_ids:
         if blog_id in comment_data:
             filtered_comments[blog_id] = comment_data[blog_id]
     return filtered_comments
+
 
 def fetch_data_from_microservice(url, user_id):
     try:
