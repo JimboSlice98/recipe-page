@@ -37,9 +37,9 @@ jobs:
           pip list
         working-directory: main-site/api
 
-
+       
       - name: Install dependencies in api
-        run: pip install -r main-site/requirements_copy.txt
+        run: pip install -r main-site/api/requirements_copy.txt
         working-directory: main-site/api
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
