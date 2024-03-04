@@ -21,6 +21,10 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from azure.data.tables import TableServiceClient, TableClient
 
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, Text,  DateTime, select, or_, func, distinct
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
+
 load_dotenv()
 from openai import OpenAI
 import openai
@@ -35,6 +39,138 @@ try:
     openai.api_key = os.getenv("OPENAI_API_KEY")
 except:
     openai.api_key = None
+
+
+# Construct the database URL from environment variables
+try:
+    DATABASE_URL = (
+        f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@"
+        f"{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}?sslmode={os.environ['DB_SSLMODE']}"
+    )
+
+    # Define the messages table structure
+    metadata = MetaData()
+    messages = Table('messages', metadata,
+                    Column('chat_id', Integer, primary_key=True),
+                    Column('user_id1', Integer),
+                    Column('user_id2', Integer),
+                    Column('message', Text),
+                    Column('sender', Integer),
+                    Column('time_stamp', Text) 
+                    )
+
+    # Create an engine and bind it to the metadata
+    engine = create_engine(DATABASE_URL)
+    metadata.bind = engine
+
+    # Create a configured "Session" class
+    Session = sessionmaker(bind=engine)
+except:
+    print("Database connection failed")
+
+def insert_message(message_data):
+    session = Session()
+    try:
+        # Insert the message into the database
+        new_message = messages.insert().values(**message_data)
+        session.execute(new_message)
+        session.commit()
+        print(f"Inserted message from user {message_data['user_id1']} to user {message_data['user_id2']}")
+    except SQLAlchemyError as e:
+        print(f"An error occurred: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
+def get_ordered_messages(user_ids):
+    # Create a session
+    session = Session()
+    
+    try:
+        user_id1, user_id2 = user_ids[0], user_ids[1]
+
+        # Create a select query
+        query = select(messages).where(
+            or_(
+                (messages.c.user_id1 == user_id1) & (messages.c.user_id2 == user_id2),
+                (messages.c.user_id1 == user_id2) & (messages.c.user_id2 == user_id1)
+            )
+        ).order_by(messages.c.time_stamp.asc())
+        
+        # Execute the query and fetch all results
+        result = session.execute(query).fetchall()
+        
+        # Convert result to a list 
+        ordered_messages = list(result)
+        
+        return ordered_messages
+    finally:
+        # Close the session
+        session.close()   
+
+def get_user_id_conversations(user_id1):
+    session = Session()
+    
+    try:
+        # # First, create a subquery to find the latest message for each conversation involving user_id1
+        # query = select(distinct(messages.c.user_id2)).where(
+        #     messages.c.user_id1 == user_id1
+        # )
+
+        # Create a union of two queries to get all user_ids that have a conversation with user_id1
+        # One where user_id1 is the sender and one where user_id1 is the receiver
+        subquery1 = select(messages.c.user_id2).where(messages.c.user_id1 == user_id1).distinct()
+        subquery2 = select(messages.c.user_id1).where(messages.c.user_id2 == user_id1).distinct()
+
+        # Combine both subqueries to get a complete list of user_ids
+        query = subquery1.union(subquery2)
+
+        result = session.execute(query).fetchall()
+
+        # Extract other_user_id from each row in the result set
+        user_ids = [a_result[0] for a_result in result]
+        
+        return user_ids
+    finally:
+        session.close()
+
+@app.route('/post_message', methods=['POST'])
+def post_message():
+    message_data = request.json
+    insert_message(message_data)
+    return jsonify({'status': 'success', 'status_code': 200}), 200
+
+@app.route('/get_messages/<int:user_id1>/<int:user_id2>', methods=['GET'])
+def get_user_messages(user_id1, user_id2):
+    messages = get_ordered_messages([user_id1, user_id2])
+    messages_list = [
+            {
+                'chat_id': message[0],
+                'user_id1': message[1],
+                'user_id2': message[2],
+                'message': message[3],
+                'sender': message[4],
+                # Convert datetime to a string format, e.g., ISO format
+                'time_stamp': message[5].isoformat() if isinstance(message[5], datetime) else message[5]
+            }
+            for message in messages
+        ]
+    return jsonify(messages_list), 200
+
+@app.route('/start_chat', methods=['POST'])
+def start_chat():
+    message_data = request.json
+    # Inserts a blank message into the table for a new chat
+    insert_message(message_data) 
+    return jsonify({'status': 'success', 'message': 'Chat started'}), 200
+
+
+@app.route('/messages', methods=['GET'])
+def get_messages():   
+    user_id = request.args.get('user_id', 1, type=int)  # Default to 1 if not specified
+    conversations = get_user_id_conversations(user_id)
+    return render_template("messages.html", user_id=user_id, conversations=conversations)
+
 
 def get_recipe_from_prompt(user_input):
     # Only use this when we need it, as charging per request
@@ -521,8 +657,10 @@ def fetch_data_from_microservice(url, user_id):
     
 def fetch_user_settings(user_id):
     url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
+    # url = 'http://127.0.0.1:5000/get-user-details'
     
     response_code, error, data = fetch_data_from_microservice(url, user_id)
+    print("data from fetch function is",response_code, error, data)
     return response_code, error, data
 
 # @app.route("/home", methods=["GET"])
@@ -564,7 +702,7 @@ def home():
     
     # print("\n\n\n in home", images_by_blog, "\n\n\n")
     if blogs:   
-        return render_template("home.html", blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
+        return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
     else:
         return render_template("no-recipe.html")
 
@@ -581,24 +719,64 @@ def not_users():
 @app.route("/profile", methods=["GET"])
 def profile():
     user_id = request.args.get('user_id', default=None, type=int)
+    print("/proflile user_id", user_id)
     
-    # Placeholder for fetching user settings. Replace with actual data retrieval.
-    profile = None if not user_id else {"user_id": user_id, "user_name": "JaneDoe", "cooking_level": "Intermediate", "birthday": "1990-01-01"}
+    # Simulated response from a data fetching function
+    response_code, settings_error, profile = fetch_user_settings(user_id)
+    # response = (200, None, [{'cooking_level': 'Intermediate', 'display_name': 'John Doe', 'email': 'johndoe@example.com', 'favorite_cuisine': 'Mexican', 'location': 'Los Angeles, USA', 'personal_website': '', 'profile_picture_url': 'https://example.com/profiles/johndoe.jpg', 'short_bio': 'Starting my culinary journey with tacos.', 'user_id': 2}])
+    print("profile data passed in", profile)
+    profile = profile[0]
     
     if not profile:
-        # No profile found; pass an empty profile object to the template.
-        return render_template("profile.html", profile={}, error="No profile found. Please input your details.")
+        return render_template("profile.html", user_id=user_id, profile={}, error="No profile found. Please input your details.")
     
-    return render_template("profile.html", profile=profile)
+    return render_template("profile.html", user_id=user_id, profile=profile, error=settings_error)
 
-# Assuming an update-profile route to handle POST requests
+
 @app.route("/update-profile", methods=["POST"])
 def update_profile():
-    # Here, you'd retrieve form data and update the profile accordingly.
-    # This function would eventually send data to a microservice to write to database.
+    # Extract the form data from the request
+    form_data = request.form
+    user_id = request.form.get('user_id')
+    print("update profile user_id", user_id)
+
+    # Construct the data payload to send to the microservice
+    payload = {
+        'UserID': user_id,  # Assuming you have a hidden input for the UserID in your form, form_data.get('user_id')
+        'Email': form_data.get('email'),
+        'DisplayName': form_data.get('display_name'),
+        'CookingLevel': form_data.get('cooking_level'),
+        'FavoriteCuisine': form_data.get('favorite_cuisine'),
+        'ShortBio': form_data.get('short_bio'),
+        'ProfilePictureUrl': form_data.get('profile_picture_url'),
+        'PersonalWebsite': form_data.get('personal_website'),
+        'Location': form_data.get('location'),
+    }
+    print("in udpate profule the payload", payload)
     
-    # For now, redirect back to the profile page as a placeholder.
-    return redirect(url_for('profile'))
+    # The URL of the microservice endpoint
+    microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/update-user-details'
+    
+    # this is for testing in live environment
+    # microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:6000/update-user-details'
+    # microservice_url = 'http://127.0.0.1:5000/update-user-details'
+    
+    try:
+        # Send the POST request to the microservice
+        response = requests.post(microservice_url, json=payload)
+        
+        # Check if the microservice successfully processed the request
+        if response.status_code == 200:
+            # Redirect to the profile page with a success message
+            return redirect(url_for('profile', user_id=user_id, message='Profile updated successfully'))
+        else:
+            # Redirect to the profile page with an error message
+            return redirect(url_for('profile', user_id=user_id, error='Failed to update profile'))
+    except requests.exceptions.RequestException as e:
+        # Handle any exceptions that occur during the request to the microservice
+        print(e)
+        return redirect(url_for('profile', user_id=user_id, error='An error occurred while updating the profile'))
+
 
 #for login page
 @app.route('/login', methods=['GET', 'POST'])
@@ -748,3 +926,25 @@ def test():
 
 # if __name__ == '__main__':
 #     app.run(debug=True)
+    
+# # Example usage
+if __name__ == "__main__":
+#     # Dummy data for insertion
+#     # dummy_data = [
+#     #     {'user_id1': 1, 'user_id2': 2, 'message': 'Hey there!', 'sender': 1},
+#     #     {'user_id1': 2, 'user_id2': 1, 'message': 'Hello!', 'sender': 2},
+#     #     {'user_id1': 1, 'user_id2': 3, 'message': 'How are you doing?', 'sender': 1},
+#     #     {'user_id1': 2, 'user_id2': 3, 'message': 'Good morning!', 'sender': 2},
+#     #     {'user_id1': 3, 'user_id2': 1, 'message': 'Good night!', 'sender': 3}
+#     # ]
+
+#     # # Insert each message
+#     # for data in dummy_data:
+#     #     insert_message(data)
+
+#     user_ids = [1, 2]
+
+#     for message in get_ordered_messages(user_ids):
+#         print(message)
+    a = get_user_id_conversations(1)
+    print(a)
