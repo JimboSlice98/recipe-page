@@ -10,9 +10,9 @@ load_dotenv()
 app = Flask(__name__)
 
 
-@app.route("/get-user-details", methods=["GET"])
-def get_user_details():
-    user_id = request.args.get("user_id")
+@app.route("/get-comments", methods=["GET"])
+def get_comments():
+    blog_id = request.args.get("blog_id")
 
     print(
         f"Driver   = {{{os.environ['COMMENTS_DRIVER']}}};\n"
@@ -33,22 +33,30 @@ def get_user_details():
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
         
-        if user_id:
-            query = "SELECT * FROM user_details WHERE user_id = ?"
-            params = (user_id,)
+        if blog_id:
+            query = "SELECT comment_id, blog_id, user_id, message FROM Comments WHERE blog_id = ?"
+            params = (blog_id,)
         else:
-            query = "SELECT * FROM user_details"
+            query = "SELECT comment_id, blog_id, user_id, message FROM Comments"
             params = ()
 
         cursor.execute(query, params)
         rows = cursor.fetchall()
         
-        users_details = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
+        comments_data = [
+            {
+                "comment_id": row.comment_id, 
+                "blog_id": row.blog_id, 
+                "user_id": row.user_id, 
+                "message": row.message
+            } 
+            for row in rows
+        ]
         
-        if users_details:
-            return jsonify(users_details)
+        if comments_data:
+            return jsonify(comments_data)
         else:
-            return jsonify({"error": "No data found"}), 404
+            return jsonify({"error": "No comments found"}), 404
 
     except pyodbc.Error as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
