@@ -209,7 +209,7 @@ def filter_comments_by_blog_ids(blog_ids, comment_data):
 
 def fetch_data_from_microservice(url, user_id):
     try:
-        response = requests.get(url, params={"user_id": str(user_id)})
+        response = requests.get(url, params={id_type: str(id_value)})
         response_code = response.status_code
         
         if response_code == 200:
@@ -227,8 +227,15 @@ def fetch_user_settings(user_id):
     url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
     # url = 'http://127.0.0.1:5000/get-user-details'
     
-    response_code, error, data = fetch_data_from_microservice(url, user_id)
-    print("data from fetch function is",response_code, error, data)
+    response_code, error, data = fetch_data_from_microservice(url, "user_id", user_id)
+    print("data from fetch function is", response_code, error, data)
+    return response_code, error, data
+
+def fetch_comments(blog_id):
+    url = 'http://sse-comments.uksouth.azurecontainer.io:5000/get-comments'
+    
+    response_code, error, data = fetch_data_from_microservice(url, "blog_id", blog_id)
+    print("data from fetch function is", response_code, error, data)
     return response_code, error, data
 
 
@@ -236,12 +243,26 @@ def fetch_user_settings(user_id):
 def home():
     user_id = request.args.get('user_id', default=2, type=int)
 
-    response_code, settings_error, data = fetch_user_settings(user_id)
+    # response_code, settings_error, data = fetch_user_details(user_id)
     
-    profile = data[0] if data else {}
+    # profile = data[0] if data else {}
     
     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
+
+
+    
+    # Will return a 
+    response_code, settings_error, user_data = fetch_user_details(user_id)
+    
+    profile = user_data[0] if user_data else {}
+    
+    # blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
+    # comments = filter_comments_by_blog_ids(blog_ids, comment_data)
+
+
+
+
 
     # Fetch images metadata for each blog_id and generate URLs
     images_by_blog = {}
@@ -273,7 +294,7 @@ def profile():
     print("/proflile user_id", user_id)
     
     # Simulated response from a data fetching function
-    response_code, settings_error, profile = fetch_user_settings(user_id)
+    response_code, settings_error, profile = fetch_user_details(user_id)
     # response = (200, None, [{'cooking_level': 'Intermediate', 'display_name': 'John Doe', 'email': 'johndoe@example.com', 'favorite_cuisine': 'Mexican', 'location': 'Los Angeles, USA', 'personal_website': '', 'profile_picture_url': 'https://example.com/profiles/johndoe.jpg', 'short_bio': 'Starting my culinary journey with tacos.', 'user_id': 2}])
     print("profile data passed in", profile)
     profile = profile[0]
