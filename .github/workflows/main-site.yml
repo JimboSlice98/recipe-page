@@ -33,6 +33,8 @@ jobs:
       #   run: |
       #     python -m venv venv
       #     source venv/bin/activate
+      #     pip install -r requirementscopy.txt
+      #     pip list
       #   working-directory: main-site/api
        
       # - name: Install dependencies in api
