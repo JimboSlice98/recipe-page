@@ -29,7 +29,7 @@ jobs:
         working-directory: main-site/api
 
       - name: Install dependencies
-        run: pip install -r main-site/api/requirements.txt
+        run: pip install -r main-site/requirements.txt
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
