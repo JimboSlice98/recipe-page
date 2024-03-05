@@ -62,6 +62,7 @@ def get_recipe_details():
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
+
 @app.route("/insert-recipe-details", methods=["POST"])
 def insert_recipe_details():
     blog_title = request.form.get('blog_title')
@@ -95,3 +96,8 @@ def insert_recipe_details():
         # For any error, rollback the session and return an error message
         db.session.rollback()
         return jsonify({"error": "An error occurred while inserting the recipe.", "details": str(e)}), 500
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    
