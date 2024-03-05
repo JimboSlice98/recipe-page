@@ -18,23 +18,23 @@ import pyodbc
 
 load_dotenv()
 
-# # Database class to handle contacting Message
-# from api.helpers.helper_db_messages import MessagesDatabaseManager 
-
-# # Get function to contact openAI
-# from api.helpers.helper_AI import get_recipe_from_prompt
-
-# # Images database class to contact Messages
-# from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
-
-# # For development?
-from helpers.helper_db_messages import MessagesDatabaseManager 
+# Database class to handle contacting Message
+from api.helpers.helper_db_messages import MessagesDatabaseManager 
 
 # Get function to contact openAI
-from helpers.helper_AI import get_recipe_from_prompt
+from api.helpers.helper_AI import get_recipe_from_prompt
 
 # Images database class to contact Messages
-from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+
+# # # For development?
+# from helpers.helper_db_messages import MessagesDatabaseManager 
+
+# # Get function to contact openAI
+# from helpers.helper_AI import get_recipe_from_prompt
+
+# # Images database class to contact Messages
+# from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
 
 
 # Configure app.py
@@ -252,6 +252,7 @@ def fetch_comments(blog_id):
     return response_code, error, data
 
 
+
 @app.route("/home", methods=["GET"])
 def home():
     user_id = request.args.get('user_id', default=2, type=int)
@@ -259,7 +260,8 @@ def home():
     # response_code, settings_error, data = fetch_user_details(user_id)
     
     # profile = data[0] if data else {}
-    
+    # blog_data = request_reiceps_details(user_id):
+
     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
 
