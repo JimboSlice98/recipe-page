@@ -31,57 +31,60 @@
   </div>
 <!-- Recipe Section -->
 <div class="row justify-content-center profile-body">
-    <!-- Main content column -->
-    <div class="col-12 col-lg-8">
-      <!-- Toggleable Add Recipe Container -->
-      <div class="card rounded mb-3">
-        <div class="card-header" role="tab">
-          <h6 class="mb-0" style="font-size: 1.5rem; font-weight: bold;">
-            <a class="text-decoration-none" data-bs-toggle="collapse" href="#addRecipeCollapse" aria-expanded="true" aria-controls="addRecipeCollapse">
-              Add Recipe Here
-            </a>
-          </h6>
-        </div>
-        <div id="addRecipeCollapse" class="collapse" role="tabpanel">
-          <div class="card-body">
-            <!-- AI Recipe Prompt Form -->
-            <div class="mb-3">
-              <h6 class="card-title">Ask AI for a Recipe</h6>
-              <div class="input-group">
-                <input type="text" id="ai-prompt" class="form-control" placeholder="Enter your recipe request...">
-                <button class="btn btn-secondary" type="button" onclick="askAI()">AI</button>
-              </div>
+  <!-- Main content column -->
+  <div class="col-12 col-lg-8">
+    <!-- Toggleable Add Recipe Container -->
+    <div class="card rounded mb-3">
+      <div class="card-header" role="tab">
+        <h6 class="mb-0" style="font-size: 1.5rem; font-weight: bold;">
+          <a class="text-decoration-none" data-bs-toggle="collapse" href="#addRecipeCollapse" aria-expanded="true" aria-controls="addRecipeCollapse">
+            Add Recipe Here
+          </a>
+        </h6>
+      </div>
+      <div id="addRecipeCollapse" class="collapse" role="tabpanel">
+        <div class="card-body">
+          <!-- AI Recipe Prompt Form -->
+          <div class="mb-3">
+            <h6 class="card-title">Ask AI for a Recipe</h6>
+            <div class="input-group">
+              <input type="text" id="ai-prompt" class="form-control" placeholder="Enter your recipe request...">
+              <button class="btn btn-secondary" type="button" onclick="askAI()">AI</button>
             </div>
-            <!-- Add Recipe Form -->
-            <h6 class="card-title">Add New Recipe</h6>
-            <form id="add-recipe-form">
-              <div class="mb-3">
-                <label for="recipe-title" class="form-label">Title</label>
-                <input type="text" class="form-control" id="recipe-title" placeholder="Enter recipe title" required>
-              </div>
-              <div class="mb-3">
-                <label for="recipe-ingredients" class="form-label">Ingredients</label>
-                <textarea class="form-control" id="recipe-ingredients" rows="3" placeholder="List ingredients here" required></textarea>
-              </div>
-              <div class="mb-3">
-                <label for="recipe-steps" class="form-label">Steps</label>
-                <textarea class="form-control" id="recipe-steps" rows="5" placeholder="Describe the steps here" required></textarea>
-              </div>
-              <button type="button" class="btn btn-primary" onclick="addRecipe()">Add Recipe</button>
-            </form>
           </div>
+          <!-- Add Recipe Form -->
+          <h6 class="card-title">Add New Recipe</h6>
+          <form id="add-recipe-form">
+            <div class="mb-3">
+              <label for="recipe-title" class="form-label">Title</label>
+              <input type="text" class="form-control" id="recipe-title" placeholder="Enter recipe title" required>
+            </div>
+            <div class="mb-3">
+              <label for="recipe-ingredients" class="form-label">Ingredients</label>
+              <textarea class="form-control" id="recipe-ingredients" rows="3" placeholder="List ingredients here" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="recipe-steps" class="form-label">Steps</label>
+              <textarea class="form-control" id="recipe-steps" rows="5" placeholder="Describe the steps here" required></textarea>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="addRecipe()">Add Recipe</button>
+          </form>
         </div>
       </div>
+    </div>
 
-     <!-- Recipe Section -->
+  <!-- Recipe Section -->
   <div class="row justify-content-center profile-body">
     <!-- Main content column -->
     <div class="col-12 col-lg-10">
       {% if blogs %}
         {% for blog_id, blog in blogs.items() %}
+          <!-- <script>
+            console.log("Blog Data:", {{ blog | tojson }});
+          </script> -->
           <div class="card rounded mb-4">
             <div class="card-body">
-              <h5 class="card-title" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_name }}</h5>
+              <h5 class="card-title" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_title }}</h5>
               <!-- Image gallery for this blog -->
               {% if images_by_blog.get(blog_id) %}
                 <div id="carouselBlog-{{ blog_id }}" class="carousel slide" data-bs-ride="carousel">
@@ -146,8 +149,8 @@
               <!-- Collapsible Recipe Ingredients and Steps -->
               <div class="collapse" id="collapseRecipe-{{ blog_id }}">
                 <div class="card card-body mt-2">
-                  <p class="card-text"><strong>Ingredients:</strong> {{ blog.recipe_ingredients }}</p>
-                  <p class="card-text"><strong>Steps:</strong> {{ blog.recipe_steps }}</p>
+                  <p class="card-text"><strong>Ingredients:</strong> {{ blog[blog_ingredients] }}</p>
+                  <p class="card-text"><strong>Steps:</strong> {{ blog[blog_description] }}</p>
                 </div>
               </div>
 

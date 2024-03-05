@@ -38,7 +38,7 @@ from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog
 
 # Import helper functions for login
 #from api.helpers.helper_login import authenticate_user
-from helpers.helper_login import authenticate_user
+# from helpers.helper_login import authenticate_user
 
 
 # Configure app.py
@@ -259,15 +259,16 @@ def index():
     except ValueError as e:
         return render_template("index.html", error="Failed to decode JSON from response")
 
+################### START FUNCTION CLUSTERFUCK ###################
 
 def filter_blogs_by_user(user_id, blog_data):
-    user_id = str(user_id)
+    # user_id = str(user_id)
     filtered_blogs = {}
     blog_ids = []
-    for blog_id, data in blog_data.items():
-        if data['user_id'] == user_id:
-            filtered_blogs[blog_id] = data
-            blog_ids.append(blog_id)
+    for blog in blog_data:
+        if blog['user_id'] == user_id:
+            filtered_blogs[blog['blog_id']] = blog
+            blog_ids.append(blog['blog_id'])
     return filtered_blogs, blog_ids
 
 
@@ -277,7 +278,6 @@ def filter_comments_by_blog_ids(blog_ids, comment_data):
         if blog_id in comment_data:
             filtered_comments[blog_id] = comment_data[blog_id]
     return filtered_comments
-
 
 def fetch_data_from_microservice(url, id_type, id_value):
     try:
@@ -295,9 +295,8 @@ def fetch_data_from_microservice(url, id_type, id_value):
     except ValueError as e:
         return None, "Failed to decode JSON from response", {}
     
-def fetch_user_settings(user_id):
+def fetch_user_details(user_id):
     url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
-    # url = 'http://127.0.0.1:5000/get-user-details'
     
     response_code, error, data = fetch_data_from_microservice(url, "user_id", user_id)
     print("data from fetch function is", response_code, error, data)
@@ -310,38 +309,36 @@ def fetch_comments(blog_id):
     print("data from fetch function is", response_code, error, data)
     return response_code, error, data
 
+def fetch_recipes(user_id):
+    url = 'http://sse-recipes.uksouth.azurecontainer.io:5000/get-recipe-details'
+    
+    response_code, error, data = fetch_data_from_microservice(url, "user_id", user_id)
+    print("data from fetch function is", response_code, error, data)
+    return response_code, error, data
 
+################### END FUNCTION CLUSTERFUCK ###################
 
 @app.route("/home", methods=["GET"])
 def home():
     user_id = request.args.get('user_id', default=2, type=int)
+    response_code, settings_error, user_data = fetch_user_details(user_id)
+    response_code, settings_error, recipe_data = fetch_recipes(user_id)
 
-    # response_code, settings_error, data = fetch_user_details(user_id)
-    
-    # profile = data[0] if data else {}
-    # blog_data = request_reiceps_details(user_id):
-
-    blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
-    comments = filter_comments_by_blog_ids(blog_ids, comment_data)
-
-
-    
-    # Will return a 
-    response_code, settings_error, user_data = fetch_user_settings(user_id)
+    # print('\n\n\n\n', user_id, '\n', recipe_data)
     
     profile = user_data[0] if user_data else {}
     
-    # blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
-    # comments = filter_comments_by_blog_ids(blog_ids, comment_data)
+    blogs, blog_ids = filter_blogs_by_user(user_id, recipe_data)
+    comments = filter_comments_by_blog_ids(blog_ids, comment_data)
 
+    # print('\n\n\n\n', blogs, '\n', comments)
 
-    # Fetch images metadata for each blog_id and generate URLs
     images_by_blog = {}
-    for blog_id in blog_ids:
-        # images_metadata = fetch_all_images_metadata(user_id, blog_id)
-        images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
-        # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
-        images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
+    # for blog_id in blog_ids:
+    #     # images_metadata = fetch_all_images_metadata(user_id, blog_id)
+    #     images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
+    #     # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
+    #     images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
     
     if blogs:   
         return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
