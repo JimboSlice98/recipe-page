@@ -57,4 +57,4 @@ jobs:
               --registry-login-server SSERecipeContainers.azurecr.io \
               --registry-username ${{ secrets.ACR_USERNAME }} \
               --registry-password ${{ secrets.ACR_PASSWORD }} \
-              --environment-variables FLASK_ENV="production" RECIPES_DRIVER="${{ secrets.RECIPES_DRIVER }}" RECIPES_SERVER="${{ secrets.RECIPES_SERVER }}" RECIPES_DATABASE="${{ secrets.RECIPES_DATABASE }}" RECIPES_USERNAME="${{ secrets.RECIPES_USERNAME }}" RECIPES_PASSWORD="${{ secrets.RECIPES_PASSWORD }}"
+              --environment-variables FLASK_ENV="production" RECIPES_PORT="${{ secrets.RECIPES_PORT }}" RECIPES_SERVER="${{ secrets.RECIPES_SERVER }}" RECIPES_DATABASE="${{ secrets.RECIPES_DATABASE }}" RECIPES_USERNAME="${{ secrets.RECIPES_USERNAME }}" RECIPES_PASSWORD="${{ secrets.RECIPES_PASSWORD }}"
