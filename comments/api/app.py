@@ -34,10 +34,10 @@ def get_comments():
         cursor = conn.cursor()
         
         if blog_id:
-            query = "SELECT comment_id, blog_id, time_stamp, user_id, message FROM Comments WHERE blog_id = ?"
+            query = "SELECT blog_id, time_stamp, user_id, message FROM Comments WHERE blog_id = ?"
             params = (blog_id,)
         else:
-            query = "SELECT comment_id, blog_id, time_stamp, user_id, message FROM Comments"
+            query = "SELECT blog_id, time_stamp, user_id, message FROM Comments"
             params = ()
 
         cursor.execute(query, params)
@@ -45,7 +45,6 @@ def get_comments():
         
         comments_data = [
             {
-                "comment_id": row.comment_id, 
                 "blog_id": row.blog_id, 
                 "time_stamp": row.time_stamp,
                 "user_id": row.user_id, 
@@ -68,13 +67,12 @@ def get_comments():
 @app.route("/submit-comment", methods=["POST"])
 def submit_comment():
     data = request.json
-    comment_id = data.get("comment_id")
     time_stamp = data.get("time_stamp")
     blog_id = data.get("blog_id")
     user_id = data.get("user_id")
     message = data.get("message")
     
-    if not all([comment_id, time_stamp, blog_id, user_id, message]):
+    if not all([time_stamp, blog_id, user_id, message]):
         return jsonify({"error": "Missing required fields"}), 400
     
     try:
@@ -88,8 +86,8 @@ def submit_comment():
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
         
-        query = "INSERT INTO Comments (comment_id, time_stamp, blog_id, user_id, message) VALUES (?, ?, ?, ?, ?)"
-        cursor.execute(query, (comment_id, time_stamp, blog_id, user_id, message))
+        query = "INSERT INTO Comments (time_stamp, blog_id, user_id, message) VALUES (?, ?, ?, ?)"
+        cursor.execute(query, (time_stamp, blog_id, user_id, message))
         conn.commit()
         
         return jsonify({"success": "Comment submitted successfully"}), 201
@@ -113,7 +111,6 @@ def new_comment():
     <body>
         <h2>Submit New Comment</h2>
         <form id="commentForm">
-            Comment ID: <input type="text" name="comment_id"><br>
             Time Stamp: <input type="text" name="time_stamp"><br>
             Blog ID: <input type="number" name="blog_id"><br>
             User ID: <input type="number" name="user_id"><br>
