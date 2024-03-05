@@ -626,28 +626,28 @@ def register():
         return 'Registration successful'
     return render_template('register.html')
 
-#
-#@app.route("/get-user-authentication", methods=["GET"])
-@app.route("/test", methods=["GET"])
-#def get_user_authentication():
-def test():
+
+@app.route("/get-authentication", methods=["GET"])
+# @app.route("/test", methods=["GET"])
+def get_authentication():
+# def test():
     user_id = request.args.get("user_id")
 
     print(
-        f"Driver   = {{{os.environ['USER_AUTHENTICATION_DRIVER']}}};\n"
-        f"Server   = {os.environ['USER_AUTHENTICATION_SERVER']};\n"
-        f"Database = {os.environ['USER_AUTHENTICATION_DATABASE']};\n"
-        f"UID      = {os.environ['USER_AUTHENTICATION_USERNAME']};\n"
-        f"PWD      = {os.environ['USER_AUTHENTICATION_PASSWORD']};\n"
+        f"Driver   = {{{os.environ['AUTHENTICATION_DRIVER']}}};\n"
+        f"Server   = {os.environ['AUTHENTICATION_SERVER']};\n"
+        f"Database = {os.environ['AUTHENTICATION_DATABASE']};\n"
+        f"UID      = {os.environ['AUTHENTICATION_USERNAME']};\n"
+        f"PWD      = {os.environ['AUTHENTICATION_PASSWORD']};\n"
         )
 
     try:
         conn_str = (
-            f"Driver={{{os.environ['USER_AUTHENTICATION_DRIVER']}}};"
-            f"Server={os.environ['USER_AUTHENTICATION_SERVER']};"
-            f"Database={os.environ['USER_AUTHENTICATION_DATABASE']};"
-            f"UID={os.environ['USER_AUTHENTICATION_USERNAME']};"
-            f"PWD={os.environ['USER_AUTHENTICATION_PASSWORD']};"
+            f"Driver={{{os.environ['AUTHENTICATION_DRIVER']}}};"
+            f"Server={os.environ['AUTHENTICATION_SERVER']};"
+            f"Database={os.environ['AUTHENTICATION_DATABASE']};"
+            f"UID={os.environ['AUTHENTICATION_USERNAME']};"
+            f"PWD={os.environ['AUTHENTICATION_PASSWORD']};"
         )
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
@@ -659,12 +659,15 @@ def test():
         #     query = "SELECT * FROM "User""
         #     params = ()
 
-        if user_id:
-            query = 'SELECT * FROM "User"'
-            params = (user_id,)
-        else:
-            query = 'SELECT * FROM "User"'
-            params = ()
+        # if user_id:
+        #     query = 'SELECT * FROM "Userauth"'
+        #     params = (user_id,)
+        # else:
+        #     query = 'SELECT * FROM "Userauth"'
+        #     params = ()
+
+        data = {'message': 'Hello, world!'}
+        return jsonify(data)
 
         cursor.execute(query, params)
         rows = cursor.fetchall()
@@ -739,5 +742,5 @@ def test():
 #     except Exception as e:
 #         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
