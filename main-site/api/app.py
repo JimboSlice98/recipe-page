@@ -417,37 +417,58 @@ def update_profile():
         return redirect(url_for('profile', user_id=user_id, error='An error occurred while updating the profile'))
 
 
-#for login page
+# Login page
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None  # Initialize error message to None
     if request.method == 'POST':
         user_id = request.form['user_id']
         password = request.form['password']
-        # Hardcoded validation for demonstration purposes
-        if user_id != "admin" or password != "password":
-            error = 'Invalid credentials. Please try again.'
-        else:
-            # Assuming you have a route named 'home' for the home page
-            return redirect(url_for('home'))  # Redirect to home on success
+        
+        try:
+            # Establish connection to the database
+            conn_str = (
+                f"Driver={{{os.environ['AUTHENTICATION_DRIVER']}}};"
+                f"Server={os.environ['AUTHENTICATION_SERVER']};"
+                f"Database={os.environ['AUTHENTICATION_DATABASE']};"
+                f"UID={os.environ['AUTHENTICATION_USERNAME']};"
+                f"PWD={os.environ['AUTHENTICATION_PASSWORD']};"
+            )
+            conn = pyodbc.connect(conn_str)
+            cursor = conn.cursor()
+            
+            # Execute query to check user credentials
+            query = "SELECT * FROM Userauth WHERE user_id = ? AND password = ?"
+            cursor.execute(query, (user_id, password))
+            user = cursor.fetchone()
+            
+            if user:
+                # Redirect to home page with user_id
+                return redirect(url_for('home', user_id=user_id))
+            else:
+                error = 'Invalid credentials. Please try again.'
+        except pyodbc.Error as e:
+            # Handle database errors
+            error = 'Database error. Please try again later.'
+        finally:
+            # Close database connection
+            cursor.close()
+            conn.close()
+    
+    # Render login page with error message
     return render_template('login.html', error=error)
 
 
-#nma just added for register page
+# Simple register page
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # Here you can handle the form data after validation.
-        # For this example, we'll just return a simple message.
-        # In a real application, you should handle the data properly.
         return 'Registration successful'
     return render_template('register.html')
 
 
 @app.route("/get-authentication", methods=["GET"])
-# @app.route("/test", methods=["GET"])
 def get_authentication():
-# def test():
     user_id = request.args.get("user_id")
 
     print(
@@ -469,107 +490,16 @@ def get_authentication():
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
 
-        #stack overflow troubleshooting
-        #https://stackoverflow.com/questions/50046158/pyodbc-login-timeout-error
-        #https://stackoverflow.com/questions/56053724/microsoftodbc-driver-17-for-sql-serverlogin-timeout-expired-0-sqldriverco
-        #connection = pyodbc.connect("DRIVER={ODBC Driver 17 for SQL Server};SERVER=myserver;DATABASE=mydb;UID=myuser;PWD=mypassword", autocommit=True)
-
-        
-        
-        # if user_id:
-        #     query = "SELECT * FROM "User""
-        #     params = (user_id,)
-        # else:
-        #     query = "SELECT * FROM "User""
-        #     params = ()
-
-        # if user_id:
-        #     query = 'SELECT * FROM "Userauth"'
-        #     params = (user_id,)
-        # else:
-        #     query = 'SELECT * FROM "Userauth"'
-        #     params = ()
-
         data = {'message': 'Hello, world!'}
         return jsonify(data)
 
         cursor.execute(query, params)
         rows = cursor.fetchall()
-        
-        # users_details = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
-        
-        # if users_details:
-        #     return jsonify(users_details)
-        # else:
-        #     return jsonify({"error": "No data found"}), 404
 
     except pyodbc.Error as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
-
-# # SQLAlchemy configuration
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://sse-user-authentication-admin:fTH4&qrse$$Geq@sse-user-authentication-server.database.windows.net/sse-user_authentication-database?driver=ODBC+Driver+17+for+SQL+Server'
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# db = SQLAlchemy(app)
-
-# # Define your database model
-# class User(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     first_name = db.Column(db.String(100))
-#     last_name = db.Column(db.String(100))
-#     gender = db.Column(db.String(20))
-#     date_of_birth = db.Column(db.Date)
-#     email = db.Column(db.String(120), unique=True)
-#     postcode = db.Column(db.String(20))
-#     password = db.Column(db.String(100))
-
-#     def __repr__(self):
-#         return f'<User {self.id}>'
-
-# # Flask route
-# @app.route("/test", methods=["GET"])
-# def get_user_authentication():
-#     user_id = request.args.get("user_id")
-
-#     try:
-#         if user_id:
-#             user = User.query.get(user_id)
-#             if user:
-#                 user_data = {
-#                     "user_id": user.id,
-#                     "first_name": user.first_name,
-#                     "last_name": user.last_name,
-#                     "gender": user.gender,
-#                     "date_of_birth": user.date_of_birth.strftime("%Y-%m-%d"),
-#                     "email": user.email,
-#                     "postcode": user.postcode,
-#                     "password": user.password
-#                 }
-#                 return jsonify(user_data)
-#             else:
-#                 return jsonify({"error": "User not found"}), 404
-#         else:
-#             users = User.query.all()
-#             users_data = [{
-#                 "user_id": user.id,
-#                 "first_name": user.first_name,
-#                 "last_name": user.last_name,
-#                 "gender": user.gender,
-#                 "date_of_birth": user.date_of_birth.strftime("%Y-%m-%d"),
-#                 "email": user.email,
-#                 "postcode": user.postcode,
-#                 "password": user.password
-#             } for user in users]
-#             return jsonify(users_data)
-
-#     except Exception as e:
-#         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
-# if __name__ == '__main__':
-#     app.run(debug=True)
     
 # # # Example usage
 # if __name__ == "__main__":
@@ -592,3 +522,7 @@ if __name__ == '__main__':
 # #         print(message)
 #     a = get_user_id_conversations(1)
 #     print(a)
+
+# Turn debug mode for testing
+# if __name__ == '__main__':
+#     app.run(debug=True)
