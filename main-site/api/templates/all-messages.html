@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div id="message-container" class="border rounded p-4 mb-4">
+            <!-- Messages will be shown here -->
+        </div>
+        <div class="input-group mb-3">
+            <input type="text" id="search-user" class="form-control" placeholder="Enter user ID to chat" aria-label="Recipient's username" aria-describedby="button-addon2">
+            <button class="btn btn-outline-secondary" type="button" id="button-addon2">Search</button>
+        </div>
+        <form id="message-form" class="form-inline">
+            <input type="text" id="message" class="form-control flex-grow-1" placeholder="Type a message..." required>
+            <button type="submit" class="btn btn-primary ml-2">Send</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

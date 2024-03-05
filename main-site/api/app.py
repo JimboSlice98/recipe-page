@@ -1,19 +1,10 @@
-import json
 import os
-import secrets
 from datetime import timedelta
-import pyodbc
-#from flask_sqlalchemy import SQLAlchemy
-#from app import app, db  # Assuming 'app' is your Flask application instance and 'db' is your SQLAlchemy instance
-#from models import User
 
 import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, redirect, render_template, request, session,
                    url_for, jsonify)
-# from flask_login import (LoginManager, current_user, login_required,                          login_user, logout_user)
-# from oauthlib.oauth2 import WebApplicationClient
-from requests.exceptions import HTTPError, RequestException
 
 # from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
@@ -21,83 +12,86 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from azure.data.tables import TableServiceClient, TableClient
 
-load_dotenv()
-from openai import OpenAI
-import openai
 
-client = OpenAI()
+import pyodbc
+
+
+load_dotenv()
+
+# # Database class to handle contacting Message
+# from api.helpers.helper_db_messages import MessagesDatabaseManager 
+
+# # Get function to contact openAI
+# from api.helpers.helper_AI import get_recipe_from_prompt
+
+# # Images database class to contact Messages
+# from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+
+# # For development?
+from helpers.helper_db_messages import MessagesDatabaseManager 
+
+# Get function to contact openAI
+from helpers.helper_AI import get_recipe_from_prompt
+
+# Images database class to contact Messages
+from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+
 
 # Configure app.py
 app = Flask(__name__)
 
-# Load your OpenAI API key from an environment variable for security
-try:
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-except:
-    openai.api_key = None
 
-def get_recipe_from_prompt(user_input):
-    # Only use this when we need it, as charging per request
-    if "admin" in user_input:
-        try:
-            if len(user_input) > 100:
-                return 
-            prompt = f"{user_input} - give me a recipe for the before. i want you do give the answers in dictionary format with  title: x, ingredients: y, steps: x .x string and y and z should be a list of strings, so then i will use the dictionary values based on the keys)"
-            print(prompt)
+# Initialise Database manager
+MessagesDatabaseManager.initialize_database()
 
-        # Use the client to create a chat completion
-            chat_completion = client.chat.completions.create(
-                messages=[{
-                    "role": "user",
-                    "content": prompt,
-                }],
-                model="gpt-3.5-turbo",
-            )
+# Intialise the Image Storaga Manager
+image_storage_manager = ImageStorageManager()
 
-            # response = chat_completion.choices[0].message['content']
-            response = chat_completion.choices[0].message.content
+################### START MESSAGES PATHS ###################
 
-            # use this line if we are in production!
-            # Convert JSON string to Python dictionary
-            response_dict = json.loads(response)
-        except:
-            response_dict = {
-        "title": "error to ai",
-        "ingredients": ["error", "er"], 
-        "steps": ["err", "err"]
+@app.route('/post_message', methods=['POST'])
+def post_message():
+    message_data = request.json
+    MessagesDatabaseManager.insert_message(message_data)
+    return jsonify({'status': 'success', 'status_code': 200}), 200
+
+
+@app.route('/get_messages/<int:user_id1>/<int:user_id2>', methods=['GET'])
+def get_user_messages(user_id1, user_id2):
+    messages = MessagesDatabaseManager.get_ordered_messages([user_id1, user_id2])
+    messages_list = [
+            {
+                'chat_id': message[0],
+                'user_id1': message[1],
+                'user_id2': message[2],
+                'message': message[3],
+                'sender': message[4],
+                # Convert datetime to a string format, e.g., ISO format
+                'time_stamp': message[5].isoformat() if isinstance(message[5], datetime) else message[5]
             }
-        
-        return response_dict
-    else:
-        
-        response = {
-        "title": "Chocolate Cake",
-        "ingredients": [
-            "1 and 3/4 cups all-purpose flour",
-            "2 cups granulated sugar",
-            "3/4 cup unsweetened cocoa powder",
-            "2 teaspoons baking soda",
-            "1 teaspoon baking powder",
-            "1 teaspoon salt",
-            "2 large eggs",
-            "1 cup buttermilk",
-            "1/2 cup vegetable oil",
-            "2 teaspoons vanilla extract",
-            "1 cup hot water"
-        ],
-        "steps": [
-            "Preheat oven to 350°F (175°C) and grease and flour two 9-inch round cake pans.",
-            "In a large bowl, whisk together flour, sugar, cocoa powder, baking soda, baking powder, and salt.",
-            "Add eggs, buttermilk, oil, and vanilla extract to the dry ingredients and mix until well combined.",
-            "Stir in hot water until the batter is smooth and pour into prepared cake pans.",
-            "Bake for 30-35 minutes or until a toothpick inserted into the center comes out clean.",
-            "Let the cakes cool in the pans for 10 minutes, then transfer to a wire rack to cool completely.",
-            "Frost and decorate as desired. Enjoy your delicious chocolate cake!"
+            for message in messages
         ]
-        }
-        # note this doesnt work when live!!!!
-        return dict(response)
+    return jsonify(messages_list), 200
+
+
+@app.route('/start_chat', methods=['POST'])
+def start_chat():
+    message_data = request.json
+    # Inserts a blank message into the table for a new chat
+    MessagesDatabaseManager.insert_message(message_data) 
+    return jsonify({'status': 'success', 'message': 'Chat started'}), 200
+
+
+@app.route('/messages', methods=['GET'])
+def get_messages():   
     
+    user_id = request.args.get('user_id', 1, type=int)  # Default to 1 if not specified
+    conversations = MessagesDatabaseManager.get_user_id_conversations(user_id)
+    return render_template("messages.html", user_id=user_id, conversations=conversations)
+
+################### END MESSAGES PATHS ###################
+
+################### START AI PATHS ###################
 
 @app.route('/generate-recipe', methods=['POST'])
 def generate_recipe():
@@ -114,296 +108,72 @@ def generate_recipe():
         # Handle errors
         print(e)  # Print the error to the console
         return jsonify({'error': str(e)}), 500
-    
 
-### IMAGE STORAGE STUFF ###
-# image storage connection constants
-try:
-    IMAGE_STORAGE_CONNECTION_STRING = os.environ.get('IMAGE_STORAGE_CONNECTION_STRING')
-    IMAGE_STORAGE_CONTAINER_NAME = os.environ.get('IMAGE_STORAGE_CONTAINER_NAME')
-    IMAGE_STORAGE_ACCOUNT_NAME = os.environ.get('IMAGE_STORAGE_ACCOUNT_NAME')
-    IMAGE_STORAGE_TABLE_NAME = os.environ.get('IMAGE_STORAGE_TABLE_NAME')
-except:
-    print("\n\n\ndidnt get image_storage varaibles\n\n\n")
+################### END AI PATHS ###################
 
-# Initialize the Table Service Client
-try:
-    table_service_client = TableServiceClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING)
-    table_client = table_service_client.get_table_client(table_name=IMAGE_STORAGE_TABLE_NAME)
-except Exception as e:
-    print(f"An unexpected error occurred: {e}")
-
-
-def fetch_images_metadata(user_id, blog_id):
-    images_metadata = {blog_id: []} 
-    try:
-        # Connect to the table
-        table_client = TableClient.from_connection_string(conn_str=IMAGE_STORAGE_CONNECTION_STRING, table_name=IMAGE_STORAGE_TABLE_NAME)
-        # Initialize with the specific blog_id
-        # images_metadata = []
-        # Create the query filter for a single blog_id
-        query_filter = f"PartitionKey eq '{user_id}' and BlogId eq '{blog_id}'\n"
-        entities = table_client.query_entities(query_filter)
-
-        for entity in entities:
-            # Add the entity to the list for the specified blog_id
-            images_metadata[blog_id].append(entity)
-            # images_metadata.append(entity)
-
-    except Exception as e:
-        print(f"Error fetching entities: {e}")
-
-    return images_metadata
-
-   
-def generate_blob_urls_by_blog_id(images_metadata):
-    blob_urls_by_blog_id = {}
-
-    try:
-        for blog_id, metadata_list in images_metadata.items():
-            blob_urls_by_blog_id[blog_id] = []
-
-            for metadata in metadata_list:
-                extension = metadata['Extension']
-                unique_id = metadata['RowKey']
-                user_id = metadata['PartitionKey']
-
-                # Construct the blob name and URL
-                filename = f"{unique_id}_{user_id}{extension}{blog_id}"
-                blob_url = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{IMAGE_STORAGE_CONTAINER_NAME}/{filename}"
-                # added blob_url[blog_id] instead of blob_url for now 
-                # print("gen blob url: addded to the key: ", blog_id, "and the value: ", blob_url)
-                blob_urls_by_blog_id[blog_id].append(blob_url)
-                # print(f"Blob URL for blog {blog_id}: {blob_url}")
-        # print("here is the url we passed in!!!", blob_urls_by_blog_id)
-    except:
-        if metadata:
-            print("metadata was okay")
-        else:
-            print("meta data was bad")
-
-    return blob_urls_by_blog_id
-
-
-def generate_unique_filename(original_filename, user_id=1, blog_id=1):
-    extension = os.path.splitext(original_filename)[1]
-    unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
-    return filename
-
-
-# Function to retrieve entities for a user_id and a list of blog_ids
-def get_image_metadata(storage_connection_string, user_id, unique_id):
-    
-    try:
-        table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name="ImageMetadata")
-        entity = table_client.get_entity(partition_key=str(user_id), row_key=unique_id)
-        return entity
-    except Exception as e:
-        print(f"Entity could not be found: {e}")
-        return None
-
-
-def delete_image_metadata(user_id, unique_id):
-    try:
-        # Create a table client
-        table_client = TableServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING).get_table_client(table_name=IMAGE_STORAGE_TABLE_NAME)
-        # Delete the entity
-        table_client.delete_entity(partition_key=str(user_id), row_key=str(unique_id))
-        print(f"Metadata for {unique_id} deleted successfully.")
-    except Exception as e:
-        print(f"Failed to delete metadata: {e}")
-
-
-def upload_image_to_blob(container_name, blob_name, upload_file_path):
-    """
-    Uploads a local file to Azure Blob Storage.
-    """
-    try:
-        blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
-        
-        # Create the container if it doesn't exist
-        container_client = blob_service_client.get_container_client(container_name)
-        try:
-            container_client.create_container()
-        except Exception as e:
-            print(f"Container already exists or another error occurred: {e}")
-    except:
-        print("couldnt connect to the image storage")
-
-    # Create a blob client using the local file name as the name for the blob
-    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-
-    # Upload the local file to blob storage
-    with open(upload_file_path, "rb") as data:
-        blob_client.upload_blob(data, overwrite=True)
-    
-    print(f"File {upload_file_path} uploaded to {container_name}/{blob_name}")
-
-
-def delete_image_from_blob(container_name, blob_name):
-    try:
-        # Create a blob client
-        blob_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING).get_blob_client(container=container_name, blob=blob_name)
-        # Delete the blob
-        blob_client.delete_blob()
-        print(f"Blob {blob_name} deleted successfully.")
-    except Exception as e:
-        print(f"Failed to delete blob: {e}")
-
-
-def get_blob_sas_url(container_name, blob_name):
-    """
-    Generates a SAS URL for accessing a blob.
-    """
-    try:
-        blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
-        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-
-        sas_token = generate_blob_sas(account_name=IMAGE_STORAGE_ACCOUNT_NAME,
-                                    container_name=container_name,
-                                    blob_name=blob_name,
-                                    account_key=blob_service_client.credential.account_key,
-                                    permission=BlobSasPermissions(read=True),
-                                    expiry=datetime.utcnow() + timedelta(hours=1))  # Token valid for 1 hour
-
-        blob_url_with_sas = f"https://{IMAGE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{container_name}/{blob_name}?{sas_token}"
-        return blob_url_with_sas
-    except:
-        return "failed"
+################### START IMAGE STORAGE PATH ###################
 
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB upload limit
-
 
 @app.route('/display-images')
 def display_images():
     user_id = request.args.get('user_id')
     blog_id = request.args.get('blog_id')
 
-    images_metadata = fetch_images_metadata(user_id, blog_id)
-    # images_metadata = fetch_all_images_metadata(user_id)
-    blob_urls_by_blog_id = generate_blob_urls_by_blog_id(images_metadata)
+    images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
+    blob_urls_by_blog_id = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
 
-    # Render a template to display images organized by blog_id
     return render_template('display_images.html', blob_urls_by_blog_id=blob_urls_by_blog_id)
 
 @app.route('/delete-image', methods=['POST'])
 def delete_image():
     data = request.form
     blob_url = data.get('blob_url')
-    print("trying to delete the blob", blob_url)
-    
-    # Extract the blob name from the blob_url
-    # https://sserecipestorage.blob.core.windows.net/sse-recipe-storage-container/20240223021611_2.jpgblog_id1233
     blob_name = blob_url.split("/")[-1]
-    
-    # sse-recipe-storage-container/20240223021611_2.jpgblog_id1233
-
-    # Decode the unique filename to get user_id and unique_id
     unique_id, user_id = blob_name.split("_")[:2]
-    print(f"unique id {unique_id} and user_id {user_id}")
-    # get only the number before the .jpg etc
     user_id = user_id.split(".")[0]
-    
-    # Remove the image from blob storage
-    delete_image_from_blob(IMAGE_STORAGE_CONTAINER_NAME, blob_name)
-    
-    # Remove the metadata from the table
-    delete_image_metadata(user_id, unique_id)
-    
-    return redirect(url_for('home', user_id=user_id))
+
+    image_storage_manager.delete_image_from_blob(blob_name)
+    image_storage_manager.delete_image_metadata(user_id, unique_id)
+
+    return redirect(url_for('home', user_id=user_id)) 
 
 
+# Is this used? Need to check
 @app.route('/upload', methods=['GET'])
 def upload_form():
     # Just render the upload form template, no need to generate a SAS token
     # The upload_form.html does the post request to below
     return render_template('upload_form.html')
 
+
 @app.route('/upload-image', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
-        return redirect(request.url)
+        return "No selected file", 400
     file = request.files['image']
     if file.filename == '':
-        return "No selected file", 400
-        # return redirect(request.url)
-    if file:
-        original_filename = file.filename
-        
-        # Retrieve user_id and blog_id from form data
-        user_id = request.form.get('user_id')
-        blog_id = request.form.get('blog_id')
-        if not user_id:
-            user_id = 1
-        if not blog_id:
-            blog_id = 1
-        
-        unique_filename, date = generate_unique_filename(original_filename, user_id, blog_id)
+        return redirect(request.url)
+    original_filename = file.filename
+    user_id = request.form.get('user_id', 1)
+    blog_id = request.form.get('blog_id', 1)
 
-        #### WILL NEED TO REMOVE #####
-        # print(f"unique_filename: {unique_filename}")  # For debugging purposes
-        try:
-            # Get a blob client and upload the file stream directly to Azure Blob Storage
-            blob_service_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING)
-            blob_client = blob_service_client.get_blob_client(container=IMAGE_STORAGE_CONTAINER_NAME, blob=unique_filename)
-            
-            # Upload the file stream to Azure Blob Storage
-            blob_client.upload_blob(file, blob_type="BlockBlob", overwrite=True)
-
-            # Insert metadata into Azure Table Storage
-            insert_image_metadata(IMAGE_STORAGE_CONNECTION_STRING, user_id, blog_id, original_filename, date)
-
-            return redirect(url_for('home', user_id=user_id))
-        except:
-            print("failed")
-            return redirect(url_for('404'))
-        # return redirect(url_for('show_uploaded_image', filename=unique_filename))
-
-
-# Will need to remove
-@app.route('/show-uploaded-image/<filename>')
-def show_uploaded_image(filename):
-    image_url = get_blob_sas_url(IMAGE_STORAGE_CONTAINER_NAME, filename)
-    return render_template("show_image.html", image_url=image_url)
-
-
-def generate_unique_filename(original_filename, user_id=1, blog_id=1):
-    extension = os.path.splitext(original_filename)[1]
-    unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"{unique_id}_{user_id if user_id else 'guest'}{extension}{blog_id}"
-    return filename, unique_id
-
-   
-def insert_image_metadata(storage_connection_string, user_id, blog_id, original_filename, date):
-    # Generate unique parts of the filename
-    unique_id = date
-    extension = os.path.splitext(original_filename)[1]
-    # unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"{unique_id}_{user_id if user_id else 'guest'}{blog_id}{extension}"
-
-    # Create a table client
-    try:
-        table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name=IMAGE_STORAGE_TABLE_NAME)
+    unique_filename, date = ImageStorageManager.generate_unique_filename(original_filename, user_id, blog_id)
+    
+    print("/upload image", unique_filename, date)
+    try: 
+        image_storage_manager.upload_image_to_blob(unique_filename, file)
+        # Assume insert_image_metadata takes user_id, blog_id, original_filename, and a datetime string or object (`date`)
+        image_storage_manager.insert_image_metadata(user_id, blog_id, original_filename, date)
+        return redirect(url_for('home', user_id=user_id))  
+    
     except:
-        print("failed to connect: insert_image_metadata")
-        return redirect(url_for('404'))
+        print("failed")
+        # set to 100 so home will redirect to 404 page for now
+        return redirect(url_for('home'), user_id=100)    
 
-    # Define the entity to insert
-    entity = {
-        "PartitionKey": str(user_id),
-        "RowKey": unique_id,
-        "BlogId": str(blog_id),
-        "OriginalFilename": original_filename,
-        "Extension": extension,
-        "Timestamp": datetime.now()
-    }
-
-    # Insert the entity
-    table_client.create_entity(entity=entity)
-
-    return filename
+################### END IMAGE STORAGE PATH ###################
 
 
 @app.route("/", methods=["GET"])
@@ -430,62 +200,6 @@ def index():
         return render_template("index.html", error="Failed to decode JSON from response")
 
 
-blog_data = {
-    'blog_id1232': {
-        'blog_name': 'Amazing Lasagna Recipe',
-        'user_id': 'user233',
-        'recipe_ingredients': '1 tomato, 2 cups of flour, 3 eggs, 4 cups of cheese, 5 leaves of basil',
-        'recipe_steps': '1. Slice the tomato, 2. Mix flour and eggs, 3. Layer the ingredients, 4. Bake for 45 minutes'
-    },
-    'blog_id1233': {
-        'blog_name': 'Classic Chicken Parmesan',
-        'user_id': '2',
-        'recipe_ingredients': '2 chicken breasts, 1 cup breadcrumbs, 1 egg, 2 cups marinara sauce',
-        'recipe_steps': '1. Bread the chicken, 2. Fry until golden, 3. Top with sauce and cheese, 4. Bake to melt cheese'
-    },
-    'blog_id1234': {
-        'blog_name': 'Vegetarian Stir Fry Extravaganza',
-        'user_id': '2',
-        'recipe_ingredients': '1 bell pepper, 100g tofu, 2 tbsp soy sauce, 1 cup broccoli',
-        'recipe_steps': '1. Chop vegetables and tofu, 2. Stir fry with soy sauce, 3. Serve over rice'
-    },
-    'blog_id1235': {
-        'blog_name': 'Ultimate Chocolate Cake',
-        'user_id': '1',
-        'recipe_ingredients': '200g chocolate, 100g butter, 3 eggs, 150g sugar, 100g flour',
-        'recipe_steps': '1. Melt chocolate and butter, 2. Mix in eggs and sugar, 3. Fold in flour, 4. Bake for 30 minutes'
-    },
-    'blog_id1236': {
-        'blog_name': 'Healthy Kale Smoothie',
-        'user_id': '1',
-        'recipe_ingredients': '2 cups kale, 1 banana, 1 apple, 1 cup almond milk',
-        'recipe_steps': '1. Chop fruits, 2. Blend with kale and almond milk until smooth'
-    }
-}
-
-comment_data = {
-    'blog_id1232': {
-        'comment2343243': {'user_id': '2', 'comment_string': 'Wow, I love this lasagna recipe!'},
-        'comment2343244': {'user_id': 'user455', 'comment_string': 'This looks absolutely delicious!'}
-    },
-    'blog_id1233': {
-        'comment2343245': {'user_id': 'user233', 'comment_string': 'Chicken Parmesan is my favorite. Thanks for sharing!'},
-        'comment2343246': {'user_id': 'user454', 'comment_string': 'I must try this over the weekend.'}
-    },
-    'blog_id1234': {
-        'comment2343247': {'user_id': 'user455', 'comment_string': 'Love a good stir fry. This vegetarian version sounds great!'},
-        'comment2343248': {'user_id': 'user233', 'comment_string': 'Tofu and soy sauce is a match made in heaven.'}
-    },
-    'blog_id1235': {
-        'comment2343249': {'user_id': 'user455', 'comment_string': 'Chocolate cake is my weakness. Can’t wait to bake this.'},
-        'comment2343250': {'user_id': 'user236', 'comment_string': 'Yum! Saving this recipe for later.'}
-    },
-    'blog_id1236': {
-        'comment2343251': {'user_id': 'user235', 'comment_string': 'Kale and apple is such a refreshing combination!'},
-        'comment2343252': {'user_id': 'user236', 'comment_string': 'Healthy and delicious. Perfect for a quick breakfast.'}
-    }
-}
-
 def filter_blogs_by_user(user_id, blog_data):
     user_id = str(user_id)
     filtered_blogs = {}
@@ -496,6 +210,7 @@ def filter_blogs_by_user(user_id, blog_data):
             blog_ids.append(blog_id)
     return filtered_blogs, blog_ids
 
+
 def filter_comments_by_blog_ids(blog_ids, comment_data):
     filtered_comments = {}
     for blog_id in blog_ids:
@@ -503,9 +218,11 @@ def filter_comments_by_blog_ids(blog_ids, comment_data):
             filtered_comments[blog_id] = comment_data[blog_id]
     return filtered_comments
 
-def fetch_data_from_microservice(url, user_id):
+
+def fetch_data_from_microservice(url, id_type, id_value):
     try:
-        response = requests.get(url, params={"user_id": str(user_id)})
+        response = requests.get(url, params={id_type: str(id_value)})
+        # response = requests.get(url, params={user_id: str(user_id)})
         response_code = response.status_code
         
         if response_code == 200:
@@ -521,52 +238,55 @@ def fetch_data_from_microservice(url, user_id):
     
 def fetch_user_settings(user_id):
     url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
+    # url = 'http://127.0.0.1:5000/get-user-details'
     
-    response_code, error, data = fetch_data_from_microservice(url, user_id)
+    response_code, error, data = fetch_data_from_microservice(url, "user_id", user_id)
+    print("data from fetch function is", response_code, error, data)
     return response_code, error, data
 
-# @app.route("/home", methods=["GET"])
-# def home():
-#     user_id = request.args.get('user_id', default=2, type=int)
-
-#     response_code, settings_error, data = fetch_user_settings(user_id)
-
-#     # if error or not data:
-#     #     return render_template("home.html", error=error or "User not found")
+def fetch_comments(blog_id):
+    url = 'http://sse-comments.uksouth.azurecontainer.io:5000/get-comments'
     
-#     profile = data[0] if data else {}
-    
-#     # Here you would filter blogs and comments based on the user_id
-#     # Assuming these functions return the appropriate data 
-#     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
-#     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
+    response_code, error, data = fetch_data_from_microservice(url, "blog_id", blog_id)
+    print("data from fetch function is", response_code, error, data)
+    return response_code, error, data
 
-#     return render_template("home.html", blogs=blogs, comments=comments, profile=profile, error=settings_error)
 
 @app.route("/home", methods=["GET"])
 def home():
     user_id = request.args.get('user_id', default=2, type=int)
 
-    response_code, settings_error, data = fetch_user_settings(user_id)
+    # response_code, settings_error, data = fetch_user_details(user_id)
     
-    profile = data[0] if data else {}
+    # profile = data[0] if data else {}
     
     blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
     comments = filter_comments_by_blog_ids(blog_ids, comment_data)
+
+
+    
+    # Will return a 
+    response_code, settings_error, user_data = fetch_user_settings(user_id)
+    
+    profile = user_data[0] if user_data else {}
+    
+    # blogs, blog_ids = filter_blogs_by_user(user_id, blog_data)
+    # comments = filter_comments_by_blog_ids(blog_ids, comment_data)
+
 
     # Fetch images metadata for each blog_id and generate URLs
     images_by_blog = {}
     for blog_id in blog_ids:
         # images_metadata = fetch_all_images_metadata(user_id, blog_id)
-        images_metadata = fetch_images_metadata(user_id, blog_id)
+        images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
         # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
-        images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
+        images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
     
-    # print("\n\n\n in home", images_by_blog, "\n\n\n")
     if blogs:   
-        return render_template("home.html", blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
+        return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
     else:
         return render_template("no-recipe.html")
+    
 
 @app.route("/404", methods=["GET"])
 def not_found(e):
@@ -581,24 +301,64 @@ def not_users():
 @app.route("/profile", methods=["GET"])
 def profile():
     user_id = request.args.get('user_id', default=None, type=int)
+    print("/proflile user_id", user_id)
     
-    # Placeholder for fetching user settings. Replace with actual data retrieval.
-    profile = None if not user_id else {"user_id": user_id, "user_name": "JaneDoe", "cooking_level": "Intermediate", "birthday": "1990-01-01"}
+    # Simulated response from a data fetching function
+    response_code, settings_error, profile = fetch_user_settings(user_id)
+    # response = (200, None, [{'cooking_level': 'Intermediate', 'display_name': 'John Doe', 'email': 'johndoe@example.com', 'favorite_cuisine': 'Mexican', 'location': 'Los Angeles, USA', 'personal_website': '', 'profile_picture_url': 'https://example.com/profiles/johndoe.jpg', 'short_bio': 'Starting my culinary journey with tacos.', 'user_id': 2}])
+    print("profile data passed in", profile)
+    profile = profile[0]
     
     if not profile:
-        # No profile found; pass an empty profile object to the template.
-        return render_template("profile.html", profile={}, error="No profile found. Please input your details.")
+        return render_template("profile.html", user_id=user_id, profile={}, error="No profile found. Please input your details.")
     
-    return render_template("profile.html", profile=profile)
+    return render_template("profile.html", user_id=user_id, profile=profile, error=settings_error)
 
-# Assuming an update-profile route to handle POST requests
+
 @app.route("/update-profile", methods=["POST"])
 def update_profile():
-    # Here, you'd retrieve form data and update the profile accordingly.
-    # This function would eventually send data to a microservice to write to database.
+    # Extract the form data from the request
+    form_data = request.form
+    user_id = request.form.get('user_id')
+    print("update profile user_id", user_id)
+
+    # Construct the data payload to send to the microservice
+    payload = {
+        'UserID': user_id,  # Assuming you have a hidden input for the UserID in your form, form_data.get('user_id')
+        'Email': form_data.get('email'),
+        'DisplayName': form_data.get('display_name'),
+        'CookingLevel': form_data.get('cooking_level'),
+        'FavoriteCuisine': form_data.get('favorite_cuisine'),
+        'ShortBio': form_data.get('short_bio'),
+        'ProfilePictureUrl': form_data.get('profile_picture_url'),
+        'PersonalWebsite': form_data.get('personal_website'),
+        'Location': form_data.get('location'),
+    }
+    print("in udpate profule the payload", payload)
     
-    # For now, redirect back to the profile page as a placeholder.
-    return redirect(url_for('profile'))
+    # The URL of the microservice endpoint
+    microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/update-user-details'
+    
+    # this is for testing in live environment
+    # microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:6000/update-user-details'
+    # microservice_url = 'http://127.0.0.1:5000/update-user-details'
+    
+    try:
+        # Send the POST request to the microservice
+        response = requests.post(microservice_url, json=payload)
+        
+        # Check if the microservice successfully processed the request
+        if response.status_code == 200:
+            # Redirect to the profile page with a success message
+            return redirect(url_for('profile', user_id=user_id, message='Profile updated successfully'))
+        else:
+            # Redirect to the profile page with an error message
+            return redirect(url_for('profile', user_id=user_id, error='Failed to update profile'))
+    except requests.exceptions.RequestException as e:
+        # Handle any exceptions that occur during the request to the microservice
+        print(e)
+        return redirect(url_for('profile', user_id=user_id, error='An error occurred while updating the profile'))
+
 
 #for login page
 @app.route('/login', methods=['GET', 'POST'])
@@ -651,6 +411,13 @@ def get_authentication():
         )
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
+
+        #stack overflow troubleshooting
+        #https://stackoverflow.com/questions/50046158/pyodbc-login-timeout-error
+        #https://stackoverflow.com/questions/56053724/microsoftodbc-driver-17-for-sql-serverlogin-timeout-expired-0-sqldriverco
+        #connection = pyodbc.connect("DRIVER={ODBC Driver 17 for SQL Server};SERVER=myserver;DATABASE=mydb;UID=myuser;PWD=mypassword", autocommit=True)
+
+        
         
         # if user_id:
         #     query = "SELECT * FROM "User""
@@ -744,3 +511,27 @@ def get_authentication():
 
 if __name__ == '__main__':
     app.run(debug=True)
+# if __name__ == '__main__':
+#     app.run(debug=True)
+    
+# # # Example usage
+# if __name__ == "__main__":
+# #     # Dummy data for insertion
+# #     # dummy_data = [
+# #     #     {'user_id1': 1, 'user_id2': 2, 'message': 'Hey there!', 'sender': 1},
+# #     #     {'user_id1': 2, 'user_id2': 1, 'message': 'Hello!', 'sender': 2},
+# #     #     {'user_id1': 1, 'user_id2': 3, 'message': 'How are you doing?', 'sender': 1},
+# #     #     {'user_id1': 2, 'user_id2': 3, 'message': 'Good morning!', 'sender': 2},
+# #     #     {'user_id1': 3, 'user_id2': 1, 'message': 'Good night!', 'sender': 3}
+# #     # ]
+
+# #     # # Insert each message
+# #     # for data in dummy_data:
+# #     #     insert_message(data)
+
+# #     user_ids = [1, 2]
+
+# #     for message in get_ordered_messages(user_ids):
+# #         print(message)
+#     a = get_user_id_conversations(1)
+#     print(a)
