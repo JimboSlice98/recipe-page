@@ -199,6 +199,35 @@ def index():
     except ValueError as e:
         return render_template("index.html", error="Failed to decode JSON from response")
 
+################### RECIPES ###################
+    
+def request_recipe_details(user_id):
+    # URL of the recipes microservice where you can fetch recipe details
+    recipes_service_url = 'http://your-recipes-service-url:port/get-recipe-details'
+    
+    try:
+        response = requests.post(recipes_service_url, json={"user_id": user_id})
+        
+        if response.status_code == 200:
+            recipes_data = response.json()
+            return recipes_data
+        else:
+            return {"error": f"Failed to fetch recipes. Status code: {response.status_code}"}
+    except requests.exceptions.RequestException as e:
+        return {"error": f"An exception occurred: {str(e)}"}
+
+@app.route("/fetch-recipes", methods=["GET"]) #needs to call get-recipes-details from microservice,  URL. 
+# this returns json but already defined in microservice. 
+def fetch_recipes():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    
+    recipes_data = request_recipe_details(user_id)
+    
+    return jsonify(recipes_data)
+
+#insert post, send JSON representation of what is the recipe details to microservice. 
+
 
 def filter_blogs_by_user(user_id, blog_data):
     user_id = str(user_id)
@@ -386,28 +415,28 @@ def register():
         return 'Registration successful'
     return render_template('register.html')
 
-
-@app.route("/get-authentication", methods=["GET"])
-# @app.route("/test", methods=["GET"])
-def get_authentication():
-# def test():
+#
+#@app.route("/get-user-authentication", methods=["GET"])
+@app.route("/test", methods=["GET"])
+#def get_user_authentication():
+def test():
     user_id = request.args.get("user_id")
 
     print(
-        f"Driver   = {{{os.environ['AUTHENTICATION_DRIVER']}}};\n"
-        f"Server   = {os.environ['AUTHENTICATION_SERVER']};\n"
-        f"Database = {os.environ['AUTHENTICATION_DATABASE']};\n"
-        f"UID      = {os.environ['AUTHENTICATION_USERNAME']};\n"
-        f"PWD      = {os.environ['AUTHENTICATION_PASSWORD']};\n"
+        f"Driver   = {{{os.environ['USER_AUTHENTICATION_DRIVER']}}};\n"
+        f"Server   = {os.environ['USER_AUTHENTICATION_SERVER']};\n"
+        f"Database = {os.environ['USER_AUTHENTICATION_DATABASE']};\n"
+        f"UID      = {os.environ['USER_AUTHENTICATION_USERNAME']};\n"
+        f"PWD      = {os.environ['USER_AUTHENTICATION_PASSWORD']};\n"
         )
 
     try:
         conn_str = (
-            f"Driver={{{os.environ['AUTHENTICATION_DRIVER']}}};"
-            f"Server={os.environ['AUTHENTICATION_SERVER']};"
-            f"Database={os.environ['AUTHENTICATION_DATABASE']};"
-            f"UID={os.environ['AUTHENTICATION_USERNAME']};"
-            f"PWD={os.environ['AUTHENTICATION_PASSWORD']};"
+            f"Driver={{{os.environ['USER_AUTHENTICATION_DRIVER']}}};"
+            f"Server={os.environ['USER_AUTHENTICATION_SERVER']};"
+            f"Database={os.environ['USER_AUTHENTICATION_DATABASE']};"
+            f"UID={os.environ['USER_AUTHENTICATION_USERNAME']};"
+            f"PWD={os.environ['USER_AUTHENTICATION_PASSWORD']};"
         )
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
@@ -426,15 +455,12 @@ def get_authentication():
         #     query = "SELECT * FROM "User""
         #     params = ()
 
-        # if user_id:
-        #     query = 'SELECT * FROM "Userauth"'
-        #     params = (user_id,)
-        # else:
-        #     query = 'SELECT * FROM "Userauth"'
-        #     params = ()
-
-        data = {'message': 'Hello, world!'}
-        return jsonify(data)
+        if user_id:
+            query = 'SELECT * FROM "User"'
+            params = (user_id,)
+        else:
+            query = 'SELECT * FROM "User"'
+            params = ()
 
         cursor.execute(query, params)
         rows = cursor.fetchall()
@@ -509,8 +535,6 @@ def get_authentication():
 #     except Exception as e:
 #         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
 # if __name__ == '__main__':
 #     app.run(debug=True)
     
