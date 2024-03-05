@@ -79,9 +79,9 @@
     <div class="col-12 col-lg-10">
       {% if blogs %}
         {% for blog_id, blog in blogs.items() %}
-          <!-- <script>
+          <script>
             console.log("Blog Data:", {{ blog | tojson }});
-          </script> -->
+          </script>
           <div class="card rounded mb-4">
             <div class="card-body">
               <h5 class="card-title" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_title }}</h5>
@@ -149,8 +149,8 @@
               <!-- Collapsible Recipe Ingredients and Steps -->
               <div class="collapse" id="collapseRecipe-{{ blog_id }}">
                 <div class="card card-body mt-2">
-                  <p class="card-text"><strong>Ingredients:</strong> {{ blog[blog_ingredients] }}</p>
-                  <p class="card-text"><strong>Steps:</strong> {{ blog[blog_description] }}</p>
+                  <p class="card-text"><strong>Ingredients:</strong> {{ blog.blog_ingredients }}</p>
+                  <p class="card-text"><strong>Steps:</strong> {{ blog.blog_description }}</p>
                 </div>
               </div>
 
