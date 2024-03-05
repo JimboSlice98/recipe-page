@@ -224,7 +224,7 @@ def fetch_data_from_microservice(url, id_type, id_value):
         response = requests.get(url, params={id_type: str(id_value)})
         # response = requests.get(url, params={user_id: str(user_id)})
         response_code = response.status_code
-        
+        git 
         if response_code == 200:
             data = response.json()
             return response_code, None, data
