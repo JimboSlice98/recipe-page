@@ -19,22 +19,22 @@ import pyodbc
 load_dotenv()
 
 # Database class to handle contacting Message
-# from api.helpers.helper_db_messages import MessagesDatabaseManager 
-
-# # Get function to contact openAI
-# from api.helpers.helper_AI import get_recipe_from_prompt
-
-# # Images database class to contact Messages
-# from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
-
-# For development?
-from helpers.helper_db_messages import MessagesDatabaseManager 
+from api.helpers.helper_db_messages import MessagesDatabaseManager 
 
 # Get function to contact openAI
-from helpers.helper_AI import get_recipe_from_prompt
+from api.helpers.helper_AI import get_recipe_from_prompt
 
 # Images database class to contact Messages
-from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+
+# # For development?
+# from helpers.helper_db_messages import MessagesDatabaseManager 
+
+# # Get function to contact openAI
+# from helpers.helper_AI import get_recipe_from_prompt
+
+# # Images database class to contact Messages
+# from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
 
 
 # Configure app.py
@@ -219,10 +219,10 @@ def filter_comments_by_blog_ids(blog_ids, comment_data):
     return filtered_comments
 
 
-def fetch_data_from_microservice(url, user_id):
+def fetch_data_from_microservice(url, id_type, id_value):
     try:
-        # response = requests.get(url, params={id_type: str(id_value)})
-        response = requests.get(url, params={user_id: str(user_id)})
+        response = requests.get(url, params={id_type: str(id_value)})
+        # response = requests.get(url, params={user_id: str(user_id)})
         response_code = response.status_code
         
         if response_code == 200:
