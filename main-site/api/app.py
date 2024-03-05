@@ -19,13 +19,23 @@ import pyodbc
 load_dotenv()
 
 # Database class to handle contacting Message
-from api.helpers.helper_db_messages import MessagesDatabaseManager 
+# from api.helpers.helper_db_messages import MessagesDatabaseManager 
+
+# # Get function to contact openAI
+# from api.helpers.helper_AI import get_recipe_from_prompt
+
+# # Images database class to contact Messages
+# from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+
+# For development?
+from helpers.helper_db_messages import MessagesDatabaseManager 
 
 # Get function to contact openAI
-from api.helpers.helper_AI import get_recipe_from_prompt
+from helpers.helper_AI import get_recipe_from_prompt
 
 # Images database class to contact Messages
-from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+
 
 # Configure app.py
 app = Flask(__name__)
