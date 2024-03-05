@@ -21,7 +21,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 class Recipe(db.Model):
-    __tablename__ = 'blogs_testing'
+    __tablename__ = 'blogs'
 
     blog_id = db.Column(db.String(50), primary_key=True)
     user_id = db.Column(db.Integer)
@@ -69,7 +69,7 @@ def insert_recipe_details():
     blog_ingredients = request.form.get('blog_ingredients')
     blog_description = request.form.get('blog_description')
     user_id = request.form.get('user_id')
-    blog_id = user_id + str(datetime.now().strftime("%Y%m%d%H%M%S"))
+    blog_id = f"{user_id}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
 
     # Parse data from the request
     data = request.get_json()
