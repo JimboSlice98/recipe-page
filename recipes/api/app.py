@@ -93,6 +93,21 @@ def insert_recipe_details():
         return jsonify({"error": "An error occurred while inserting the recipe.", "details": str(e)}), 500
 
 
+@app.route("/delete-recipe-details/<blog_id>", methods=["DELETE"])
+def delete_recipe_details(blog_id):
+    try:
+        recipe = Recipe.query.filter_by(blog_id=blog_id).first()
+        if recipe:
+            db.session.delete(recipe)
+            db.session.commit()
+            return jsonify({"message": "Recipe deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Recipe not found"}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "An error occurred while deleting the recipe.", "details": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
     
