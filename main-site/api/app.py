@@ -363,6 +363,8 @@ def home():
         # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
         images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
     
+    print("Here is the data passed to the front end for images: ", images_by_blog)
+    
     if blogs:   
         return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
     else:
