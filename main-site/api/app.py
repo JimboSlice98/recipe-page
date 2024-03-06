@@ -362,7 +362,7 @@ def profile():
     print("/proflile user_id", user_id)
     
     # Simulated response from a data fetching function
-    response_code, settings_error, profile = fetch_user_settings(user_id)
+    response_code, settings_error, profile = fetch_user_details(user_id)
     # response = (200, None, [{'cooking_level': 'Intermediate', 'display_name': 'John Doe', 'email': 'johndoe@example.com', 'favorite_cuisine': 'Mexican', 'location': 'Los Angeles, USA', 'personal_website': '', 'profile_picture_url': 'https://example.com/profiles/johndoe.jpg', 'short_bio': 'Starting my culinary journey with tacos.', 'user_id': 2}])
     print("profile data passed in", profile)
     profile = profile[0]
