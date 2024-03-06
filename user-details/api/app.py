@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 @app.route("/get-user-details", methods=["GET"])
 def get_user_details():
-    print("request to get user deails")
+    print("request to get user details")
     user_id = request.args.get("user_id")    
     print(user_id)
 
