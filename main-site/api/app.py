@@ -57,16 +57,19 @@ image_storage_manager = ImageStorageManager()
 
 function_base_url ="https://comments-function.azurewebsites.net"
 
-
 @app.route('/messages', methods=['GET'])
 def get_messages():
     user_id = request.args.get('user_id')
     function_url = f"{function_base_url}/messages?user_id={user_id}"
+    print(function_url)
     response = requests.get(function_url)
     if response.ok:
-        return render_template('messages.html', conversations=response.json())
+        return render_template('messages.html', user_id=user_id, conversations=response.json())
     else:
-        return "Error fetching messages", response.status_code
+        print("\n/Messages Function failed!\n")
+        conversations = MessagesDatabaseManager.get_user_id_conversations(user_id)
+        return render_template("messages.html", user_id=user_id, conversations=conversations)
+        # return render_template('messages.html', conversations=response.json())
 
 
 @app.route('/start_chat', methods=['POST'])
@@ -77,7 +80,10 @@ def start_chat():
     if response.ok:
         return jsonify(response.json()), 200
     else:
-        return "Error starting chat", response.status_code
+        print("Start chat failed using messages function")
+        MessagesDatabaseManager.insert_message(message_data) 
+        return jsonify({'status': 'success', 'message': 'Chat started'}), 200
+        # return "Error starting chat", response.status_code  
 
 
 @app.route('/post_message', methods=['POST'])
@@ -93,12 +99,15 @@ def post_message():
 
     # Check if the request to the Azure Function was successful
     if response.ok:
+        print("posted the messsage")
         # Return the JSON response from the Azure Function
         return jsonify(response.json()), 200
     else:
         # In case of an error, return an error response
-        return jsonify({'status': 'error', 'message': 'Failed to post message'}), response.status_code
-
+        print("failed to post the message using function")
+        MessagesDatabaseManager.insert_message(message_data)
+        return jsonify({'status': 'success', 'status_code': 200}), 200
+    
 
 @app.route('/get_messages/<int:user_id1>/<int:user_id2>', methods=['GET'])
 def get_user_messages(user_id1, user_id2):
@@ -108,40 +117,53 @@ def get_user_messages(user_id1, user_id2):
         messages_list = response.json()
         return jsonify(messages_list), 200
     else:
-        return "Error fetching messages", response.status_code
-
+        print("get messages between users on function failed")
+        messages = MessagesDatabaseManager.get_ordered_messages([user_id1, user_id2])
+        messages_list = [
+                {
+                    'chat_id': message[0],
+                    'user_id1': message[1],
+                    'user_id2': message[2],
+                    'message': message[3],
+                    'sender': message[4],
+                    # Convert datetime to a string format, e.g., ISO format
+                    'time_stamp': message[5].isoformat() if isinstance(message[5], datetime) else message[5]
+                }
+                for message in messages
+            ]
+        return jsonify(messages_list), 200
 
 # @app.route('/post_message', methods=['POST'])
 # def post_message():
-#     message_data = request.json
-#     MessagesDatabaseManager.insert_message(message_data)
-#     return jsonify({'status': 'success', 'status_code': 200}), 200
+    # message_data = request.json
+    # MessagesDatabaseManager.insert_message(message_data)
+    # return jsonify({'status': 'success', 'status_code': 200}), 200
 
 
 # @app.route('/get_messages/<int:user_id1>/<int:user_id2>', methods=['GET'])
 # def get_user_messages(user_id1, user_id2):
-#     messages = MessagesDatabaseManager.get_ordered_messages([user_id1, user_id2])
-#     messages_list = [
-#             {
-#                 'chat_id': message[0],
-#                 'user_id1': message[1],
-#                 'user_id2': message[2],
-#                 'message': message[3],
-#                 'sender': message[4],
-#                 # Convert datetime to a string format, e.g., ISO format
-#                 'time_stamp': message[5].isoformat() if isinstance(message[5], datetime) else message[5]
-#             }
-#             for message in messages
-#         ]
-#     return jsonify(messages_list), 200
+    # messages = MessagesDatabaseManager.get_ordered_messages([user_id1, user_id2])
+    # messages_list = [
+    #         {
+    #             'chat_id': message[0],
+    #             'user_id1': message[1],
+    #             'user_id2': message[2],
+    #             'message': message[3],
+    #             'sender': message[4],
+    #             # Convert datetime to a string format, e.g., ISO format
+    #             'time_stamp': message[5].isoformat() if isinstance(message[5], datetime) else message[5]
+    #         }
+    #         for message in messages
+    #     ]
+    # return jsonify(messages_list), 200
 
 
 # @app.route('/start_chat', methods=['POST'])
 # def start_chat():
-#     message_data = request.json
-#     # Inserts a blank message into the table for a new chat
-#     MessagesDatabaseManager.insert_message(message_data) 
-#     return jsonify({'status': 'success', 'message': 'Chat started'}), 200
+    # message_data = request.json
+    # # Inserts a blank message into the table for a new chat
+    # MessagesDatabaseManager.insert_message(message_data) 
+    # return jsonify({'status': 'success', 'message': 'Chat started'}), 200
 
 
 # @app.route('/messages', methods=['GET'])
@@ -185,6 +207,7 @@ def display_images():
 
     images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
     blob_urls_by_blog_id = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
+    print("\n\n/display-images worked", blob_urls_by_blog_id, "\n\n")
 
     return render_template('display_images.html', blob_urls_by_blog_id=blob_urls_by_blog_id)
 
