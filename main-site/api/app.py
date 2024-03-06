@@ -4,7 +4,8 @@ from datetime import timedelta
 import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, redirect, render_template, request, session,
-                   url_for, jsonify)
+                   url_for, jsonify, session)
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 
 # from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
@@ -29,7 +30,7 @@ if os.environ.get("IS_PRODUCTION") == "PRODUCTION":
 
     # Import helper functions for login
 
-    from helpers.helper_login import authenticate_user
+    from helpers.helper_login import User, salt_and_hash
 else:
     # Database class to handle contacting Message
     from api.helpers.helper_db_messages import MessagesDatabaseManager 
@@ -40,11 +41,20 @@ else:
     # Images database class to contact Messages
     from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
 
-    from api.helpers.helper_login import authenticate_user
+    from api.helpers.helper_login import User, salt_and_hash
 
 # Configure app.py
 app = Flask(__name__)
+app.config['SECRET_KEY'] = "os.getenv('SECRET_KEY')"
 
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get(user_id)
 
 # Initialise Database manager
 MessagesDatabaseManager.initialize_database()
@@ -57,6 +67,7 @@ image_storage_manager = ImageStorageManager()
 function_base_url ="https://comments-function.azurewebsites.net"
 
 @app.route('/messages', methods=['GET'])
+@login_required
 def get_messages():
     user_id = request.args.get('user_id')
     function_url = f"{function_base_url}/messages?user_id={user_id}"
@@ -72,6 +83,7 @@ def get_messages():
 
 
 @app.route('/start_chat', methods=['POST'])
+@login_required
 def start_chat():
     message_data = request.json
     function_url = f"{function_base_url}/post_message"
@@ -86,6 +98,7 @@ def start_chat():
 
 
 @app.route('/post_message', methods=['POST'])
+@login_required
 def post_message():
     # Extract the JSON payload from the incoming request
     message_data = request.json
@@ -109,6 +122,7 @@ def post_message():
     
 
 @app.route('/get_messages/<int:user_id1>/<int:user_id2>', methods=['GET'])
+@login_required
 def get_user_messages(user_id1, user_id2):
     function_url = f"{function_base_url}/get_messages?user_id1={user_id1}&user_id2={user_id2}"
     response = requests.get(function_url)
@@ -177,6 +191,7 @@ def get_user_messages(user_id1, user_id2):
 ################### START AI PATHS ###################
 
 @app.route('/generate-recipe', methods=['POST'])
+@login_required
 def generate_recipe():
     try:
         # use this line in production, but not in testing 
@@ -200,6 +215,7 @@ app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB upload limit
 
 @app.route('/display-images')
+@login_required
 def display_images():
     user_id = request.args.get('user_id')
     blog_id = request.args.get('blog_id')
@@ -211,6 +227,7 @@ def display_images():
     return render_template('display_images.html', blob_urls_by_blog_id=blob_urls_by_blog_id)
 
 @app.route('/delete-image', methods=['POST'])
+@login_required
 def delete_image():
     data = request.form
     blob_url = data.get('blob_url')
@@ -226,6 +243,7 @@ def delete_image():
 
 # Is this used? Need to check
 @app.route('/upload', methods=['GET'])
+@login_required
 def upload_form():
     # Just render the upload form template, no need to generate a SAS token
     # The upload_form.html does the post request to below
@@ -233,6 +251,7 @@ def upload_form():
 
 
 @app.route('/upload-image', methods=['POST'])
+@login_required
 def upload_image():
     if 'image' not in request.files:
         return "No selected file", 400
@@ -262,6 +281,9 @@ def upload_image():
 
 @app.route("/", methods=["GET"])
 def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('home', user_id=current_user.get_id()))
+
     user_id = 2  # The user ID you want to fetch settings for
     url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
     
@@ -343,13 +365,12 @@ def fetch_recipes(user_id):
 ################### END FUNCTION CLUSTERFUCK ###################
 
 @app.route("/home", methods=["GET"])
+@login_required
 def home():
-    user_id = request.args.get('user_id', default=2, type=int)
+    user_id = request.args.get('user_id', default=int(current_user.id), type=int)
     response_code, settings_error, user_data = fetch_user_details(user_id)
     response_code, settings_error, recipe_data = fetch_recipes(user_id)
     response_code, settings_error, comments = fetch_comments()
-
-    print('\n\n\n', comments)
     
     profile = user_data[0] if user_data else {}
     
@@ -369,7 +390,13 @@ def home():
     
     
 
-@app.route("/404", methods=["GET"])
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    abort(404)
+
+
+@app.errorhandler(404)
 def not_found(e):
     return render_template("no-recipe.html"), 404
 
@@ -380,16 +407,11 @@ def not_users():
 
 
 @app.route("/profile", methods=["GET"])
+@login_required
 def profile():
-    user_id = request.args.get('user_id', default=None, type=int)
-    print("/proflile user_id", user_id)
-    
-    # Simulated response from a data fetching function
+    user_id = request.args.get('user_id', default=int(current_user.id), type=int)    
     response_code, settings_error, profile = fetch_user_details(user_id)
-    # response = (200, None, [{'cooking_level': 'Intermediate', 'display_name': 'John Doe', 'email': 'johndoe@example.com', 'favorite_cuisine': 'Mexican', 'location': 'Los Angeles, USA', 'personal_website': '', 'profile_picture_url': 'https://example.com/profiles/johndoe.jpg', 'short_bio': 'Starting my culinary journey with tacos.', 'user_id': 2}])
-    print("profile data passed in", profile)
-    profile = profile[0]
-    
+    profile = profile[0]    
     if not profile:
         return render_template("profile.html", user_id=user_id, profile={}, error="No profile found. Please input your details.")
     
@@ -397,6 +419,7 @@ def profile():
 
 
 @app.route("/update-profile", methods=["POST"])
+@login_required
 def update_profile():
     form_data = request.form
     user_id = request.form.get('user_id')
@@ -437,63 +460,37 @@ def update_profile():
         print(e)
         return redirect(url_for('profile', user_id=user_id, error='An error occurred while updating the profile'))
 
-# Login page
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    error = None  # Initialize error message to None
+    if current_user.is_authenticated:
+        return redirect(url_for('home', user_id=current_user.get_id()))
+
+    error = None
     if request.method == 'POST':
         user_id = request.form['user_id']
         password = request.form['password']
-        
-        if authenticate_user(user_id, password):
-            # Redirect to home page with user_id
-            return redirect(url_for('home', user_id=user_id))
+        user = User.authenticate(user_id, password)
+
+        if user:
+            login_user(user)
+            return redirect(url_for('home', user_id=current_user.get_id()))
         else:
             error = 'Invalid credentials. Please try again.'
-    
-    # Render login page with error message
+
     return render_template('login.html', error=error)
 
 
-# Simple register page
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    session.clear()
+    return redirect("/")
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         return 'Registration successful'
     return render_template('register.html')
-
-
-@app.route("/get-authentication", methods=["GET"])
-def get_authentication():
-    user_id = request.args.get("user_id")
-
-    print(
-        f"Driver   = {{{os.environ['AUTHENTICATION_DRIVER']}}};\n"
-        f"Server   = {os.environ['AUTHENTICATION_SERVER']};\n"
-        f"Database = {os.environ['AUTHENTICATION_DATABASE']};\n"
-        f"UID      = {os.environ['AUTHENTICATION_USERNAME']};\n"
-        f"PWD      = {os.environ['AUTHENTICATION_PASSWORD']};\n"
-        )
-
-    try:
-        conn_str = (
-            f"Driver={{{os.environ['AUTHENTICATION_DRIVER']}}};"
-            f"Server={os.environ['AUTHENTICATION_SERVER']};"
-            f"Database={os.environ['AUTHENTICATION_DATABASE']};"
-            f"UID={os.environ['AUTHENTICATION_USERNAME']};"
-            f"PWD={os.environ['AUTHENTICATION_PASSWORD']};"
-        )
-        conn = pyodbc.connect(conn_str)
-        cursor = conn.cursor()
-
-        data = {'message': 'Hello, world!'}
-        return jsonify(data)
-
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-
-    except pyodbc.Error as e:
-        return jsonify({"error": "Database error", "details": str(e)}), 500
-    except Exception as e:
-        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
-    
