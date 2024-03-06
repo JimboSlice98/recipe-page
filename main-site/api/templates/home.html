@@ -218,7 +218,7 @@ function addRecipe(userId) {
         steps: steps,
         user_id: userId
     };
-    var endpoint = 'http://sse-recipes.uksouth.azurecontainer.io:5000//insert-recipe-details';
+    var endpoint = 'http://sse-recipes.uksouth.azurecontainer.io:5000/insert-recipe-details';
     fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -246,7 +246,7 @@ function deleteRecipe(blogId) {
         return;
     }
     
-    fetch(`http://40.76.241.98:5001/delete-recipe-details/${blogId}`, {
+    fetch(`http://sse-recipes.uksouth.azurecontainer.io:5000/delete-recipe-details/${blogId}`, {
         method: 'DELETE'
     })
     .then(response => response.json())
@@ -293,7 +293,7 @@ function addComment(blogId, userId) {
     });
 }
 function deleteComment(timeStamp, blogId) {
-  const endpoint = `http://40.76.241.98:5001/delete-comment?time_stamp=${timeStamp}&blog_id=${blogId}`;
+  const endpoint = `http://sse-comments.uksouth.azurecontainer.io:5000/delete-comment?time_stamp=${timeStamp}&blog_id=${blogId}`;
   fetch(endpoint, {
     method: 'DELETE',
   })
