@@ -33,6 +33,7 @@ jobs:
   # Rebuild container image and push to acr
   build-image-and-push-to-acr:
     runs-on: ubuntu-latest
+    need: test-user-details
     steps:
       - uses: actions/checkout@v4
 
