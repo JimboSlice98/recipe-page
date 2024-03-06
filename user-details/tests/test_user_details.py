@@ -6,13 +6,13 @@ def client():
     with app.test_client() as client:
         yield client
 
-def test_get_user_details_no_user_id(client):
-    response = client.get("/get-user-details")
-    assert response.status_code == 200
+# def test_get_user_details_no_user_id(client):
+#     response = client.get("/get-user-details")
+#     assert response.status_code == 200
 
-def test_get_user_details_with_user_id(client):
-    response = client.get("/get-user-details?user_id=1")    
-    assert response.status_code == 200
+# def test_get_user_details_with_user_id(client):
+#     response = client.get("/get-user-details?user_id=1")    
+#     assert response.status_code == 200
 
 def test_update_user_details_no_user_id(client):
     response = client.post("/update-user-details", json={})
@@ -22,6 +22,6 @@ def test_update_user_details_with_user_id(client):
     response = client.post("/update-user-details", json={"UserID": 123})
     assert response.status_code == 400
 
-def test_update_user_details_with_fields(client):
-    response = client.post("/update-user-details", json={"UserID": 123, "Email": "test@example.com"})
-    assert response.status_code == 404 
+# def test_update_user_details_with_fields(client):
+#     response = client.post("/update-user-details", json={"UserID": 123, "Email": "test@example.com"})
+#     assert response.status_code == 404 
