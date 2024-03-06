@@ -24,6 +24,7 @@ def get_user_details():
         f"PWD      = {os.environ['USER_DETAILS_PASSWORD']};\n"
         )
 
+
     try:
         conn_str = (
             f"Driver={{{os.environ['USER_DETAILS_DRIVER']}}};"
