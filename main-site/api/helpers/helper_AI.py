@@ -16,7 +16,7 @@ load_dotenv()
 
 def get_recipe_from_prompt(user_input):
     # Only use this when we need it, as charging per request
-    if "admin" in user_input:
+    if "" in user_input:
         try:
             if len(user_input) > 100:
                 return 
@@ -46,8 +46,7 @@ def get_recipe_from_prompt(user_input):
             }
         
         return response_dict
-    else:
-        
+    else:        
         response = {
         "title": "Chocolate Cake",
         "ingredients": [

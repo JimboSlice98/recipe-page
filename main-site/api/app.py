@@ -14,7 +14,6 @@ from azure.data.tables import TableServiceClient, TableClient
 
 import pyodbc
 
-
 load_dotenv()
 
 
