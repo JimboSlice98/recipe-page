@@ -364,10 +364,9 @@ def home():
     
     print("Here is the data passed to the front end for images: ", images_by_blog)
     
-    if blogs:   
-        return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
-    else:
-        return render_template("no-recipe.html")
+     
+    return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
+    
     
 
 @app.route("/404", methods=["GET"])
