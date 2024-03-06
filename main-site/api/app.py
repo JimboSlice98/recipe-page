@@ -388,9 +388,9 @@ def not_found(e):
     return render_template("no-recipe.html"), 404
 
 
-@app.route("/no-users", methods=["GET"])
-def not_users():
-    return render_template("no-recipe.html")
+# @app.route("/no-users", methods=["GET"])
+# def not_users():
+#     return render_template("no-recipe.html")
 
 
 @app.route("/profile", methods=["GET"])
@@ -451,7 +451,7 @@ def update_profile():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('home', user_id=current_user.get_id()))
+        return redirect(url_for('home'))
 
     error = None
     if request.method == 'POST':
@@ -461,7 +461,7 @@ def login():
 
         if user:
             login_user(user)
-            return redirect(url_for('home', user_id=current_user.get_id()))
+            return redirect(url_for('home'))
         else:
             error = 'Invalid credentials. Please try again.'
 

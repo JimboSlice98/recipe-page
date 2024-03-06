@@ -70,3 +70,10 @@ jobs:
           app-name: 'YourRecipeWorld'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_432E0FF062964311A6EB42BBF78A9DE7 }}
+          environment-variables: >
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            AUTHENTICATION_DRIVER=${{ secrets.AUTHENTICATION_DRIVER }}
+            AUTHENTICATION_SERVER=${{ secrets.AUTHENTICATION_SERVER }}
+            AUTHENTICATION_DATABASE=${{ secrets.AUTHENTICATION_DATABASE }}
+            AUTHENTICATION_USERNAME=${{ secrets.AUTHENTICATION_USERNAME }}
+            AUTHENTICATION_PASSWORD=${{ secrets.AUTHENTICATION_PASSWORD }}
