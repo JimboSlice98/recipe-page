@@ -17,31 +17,18 @@ import pyodbc
 
 load_dotenv()
 
-
+# Determine the base import path depending on the environment
 if os.environ.get("IS_PRODUCTION") == "PRODUCTION":
-    # # For development?
-    from helpers.helper_db_messages import MessagesDatabaseManager 
-
-    # Get function to contact openAI
-    from helpers.helper_AI import get_recipe_from_prompt
-
-    # Images database class to contact Messages
-    from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
-
-    # Import helper functions for login
-
-    from helpers.helper_login import User, salt_and_hash
+    base_path = "helpers"
 else:
-    # Database class to handle contacting Message
-    from api.helpers.helper_db_messages import MessagesDatabaseManager 
+    base_path = "api.helpers"
 
-    # Get function to contact openAI
-    from api.helpers.helper_AI import get_recipe_from_prompt
-
-    # Images database class to contact Messages
-    from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
-
-    from api.helpers.helper_login import User, salt_and_hash
+# Dynamic import using the base path
+MessagesDatabaseManager = __import__(f"{base_path}.helper_db_messages", fromlist=['MessagesDatabaseManager']).MessagesDatabaseManager
+get_recipe_from_prompt = __import__(f"{base_path}.helper_AI", fromlist=['get_recipe_from_prompt']).get_recipe_from_prompt
+ImageStorageManager = __import__(f"{base_path}.helper_db_images", fromlist=['ImageStorageManager']).ImageStorageManager
+User = __import__(f"{base_path}.helper_login", fromlist=['User']).User
+salt_and_hash = __import__(f"{base_path}.helper_login", fromlist=['salt_and_hash']).salt_and_hash
 
 # Configure app.py
 app = Flask(__name__)

@@ -12,64 +12,6 @@ from azure.data.tables import TableServiceClient, TableClient
 
 load_dotenv()
 
-
-blog_data = {
-    'blog_id1232': {
-        'blog_name': 'Amazing Lasagna Recipe',
-        'user_id': 'user233',
-        'recipe_ingredients': '1 tomato, 2 cups of flour, 3 eggs, 4 cups of cheese, 5 leaves of basil',
-        'recipe_steps': '1. Slice the tomato, 2. Mix flour and eggs, 3. Layer the ingredients, 4. Bake for 45 minutes'
-    },
-    'blog_id1233': {
-        'blog_name': 'Classic Chicken Parmesan',
-        'user_id': '2',
-        'recipe_ingredients': '2 chicken breasts, 1 cup breadcrumbs, 1 egg, 2 cups marinara sauce',
-        'recipe_steps': '1. Bread the chicken, 2. Fry until golden, 3. Top with sauce and cheese, 4. Bake to melt cheese'
-    },
-    'blog_id1234': {
-        'blog_name': 'Vegetarian Stir Fry Extravaganza',
-        'user_id': '2',
-        'recipe_ingredients': '1 bell pepper, 100g tofu, 2 tbsp soy sauce, 1 cup broccoli',
-        'recipe_steps': '1. Chop vegetables and tofu, 2. Stir fry with soy sauce, 3. Serve over rice'
-    },
-    'blog_id1235': {
-        'blog_name': 'Ultimate Chocolate Cake',
-        'user_id': '1',
-        'recipe_ingredients': '200g chocolate, 100g butter, 3 eggs, 150g sugar, 100g flour',
-        'recipe_steps': '1. Melt chocolate and butter, 2. Mix in eggs and sugar, 3. Fold in flour, 4. Bake for 30 minutes'
-    },
-    'blog_id1236': {
-        'blog_name': 'Healthy Kale Smoothie',
-        'user_id': '1',
-        'recipe_ingredients': '2 cups kale, 1 banana, 1 apple, 1 cup almond milk',
-        'recipe_steps': '1. Chop fruits, 2. Blend with kale and almond milk until smooth'
-    }
-}
-
-comment_data = {
-    'blog_id1232': {
-        'comment2343243': {'user_id': '2', 'comment_string': 'Wow, I love this lasagna recipe!'},
-        'comment2343244': {'user_id': 'user455', 'comment_string': 'This looks absolutely delicious!'}
-    },
-    'blog_id1233': {
-        'comment2343245': {'user_id': 'user233', 'comment_string': 'Chicken Parmesan is my favorite. Thanks for sharing!'},
-        'comment2343246': {'user_id': 'user454', 'comment_string': 'I must try this over the weekend.'}
-    },
-    'blog_id1234': {
-        'comment2343247': {'user_id': 'user455', 'comment_string': 'Love a good stir fry. This vegetarian version sounds great!'},
-        'comment2343248': {'user_id': 'user233', 'comment_string': 'Tofu and soy sauce is a match made in heaven.'}
-    },
-    'blog_id1235': {
-        'comment2343249': {'user_id': 'user455', 'comment_string': 'Chocolate cake is my weakness. Can’t wait to bake this.'},
-        'comment2343250': {'user_id': 'user236', 'comment_string': 'Yum! Saving this recipe for later.'}
-    },
-    'blog_id1236': {
-        'comment2343251': {'user_id': 'user235', 'comment_string': 'Kale and apple is such a refreshing combination!'},
-        'comment2343252': {'user_id': 'user236', 'comment_string': 'Healthy and delicious. Perfect for a quick breakfast.'}
-    }
-}
-
-
 class ImageStorageManager:
     def __init__(self):
         try:
