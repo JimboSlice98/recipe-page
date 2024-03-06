@@ -334,11 +334,11 @@ def home():
     # print('\n\n\n\n', blogs, '\n', comments)
 
     images_by_blog = {}
-    # for blog_id in blog_ids:
-    #     # images_metadata = fetch_all_images_metadata(user_id, blog_id)
-    #     images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
-    #     # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
-    #     images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
+    for blog_id in blog_ids:
+        # images_metadata = fetch_all_images_metadata(user_id, blog_id)
+        images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
+        # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
+        images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
     
     if blogs:   
         return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
@@ -375,14 +375,12 @@ def profile():
 
 @app.route("/update-profile", methods=["POST"])
 def update_profile():
-    # Extract the form data from the request
     form_data = request.form
     user_id = request.form.get('user_id')
     print("update profile user_id", user_id)
 
-    # Construct the data payload to send to the microservice
     payload = {
-        'UserID': user_id,  # Assuming you have a hidden input for the UserID in your form, form_data.get('user_id')
+        'UserID': user_id,
         'Email': form_data.get('email'),
         'DisplayName': form_data.get('display_name'),
         'CookingLevel': form_data.get('cooking_level'),
@@ -394,7 +392,6 @@ def update_profile():
     }
     print("in udpate profule the payload", payload)
     
-    # The URL of the microservice endpoint
     microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/update-user-details'
     
     # this is for testing in live environment
@@ -477,28 +474,3 @@ def get_authentication():
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
     
-# # # Example usage
-# if __name__ == "__main__":
-# #     # Dummy data for insertion
-# #     # dummy_data = [
-# #     #     {'user_id1': 1, 'user_id2': 2, 'message': 'Hey there!', 'sender': 1},
-# #     #     {'user_id1': 2, 'user_id2': 1, 'message': 'Hello!', 'sender': 2},
-# #     #     {'user_id1': 1, 'user_id2': 3, 'message': 'How are you doing?', 'sender': 1},
-# #     #     {'user_id1': 2, 'user_id2': 3, 'message': 'Good morning!', 'sender': 2},
-# #     #     {'user_id1': 3, 'user_id2': 1, 'message': 'Good night!', 'sender': 3}
-# #     # ]
-
-# #     # # Insert each message
-# #     # for data in dummy_data:
-# #     #     insert_message(data)
-
-# #     user_ids = [1, 2]
-
-# #     for message in get_ordered_messages(user_ids):
-# #         print(message)
-#     a = get_user_id_conversations(1)
-#     print(a)
-
-# Turn debug mode for testing
-# if __name__ == '__main__':
-#     app.run(debug=True)

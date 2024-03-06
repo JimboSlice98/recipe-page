@@ -79,9 +79,6 @@
     <div class="col-12 col-lg-10">
       {% if blogs %}
         {% for blog_id, blog in blogs.items() %}
-          <script>
-            console.log("Blog Data:", {{ blog | tojson }});
-          </script>
           <div class="card rounded mb-4">
             <div class="card-body">
               <h5 class="card-title" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_title }}</h5>
@@ -204,19 +201,42 @@ function toggleHeart(button) {
     }
 }
 function addRecipe() {
-    // Placeholder function to handle form submission
     var title = document.getElementById('recipe-title').value;
     var ingredients = document.getElementById('recipe-ingredients').value;
     var steps = document.getElementById('recipe-steps').value;
-    
-    // For now, just log to the console
-    console.log('Title:', title);
-    console.log('Ingredients:', ingredients);
-    console.log('Steps:', steps);
-    
-    // Here you will later on add the AJAX call or form submission to send data to your Flask app
-    // to contact the microservice from here?
+    var profileIdElement = document.querySelector('.profile-page h4 strong');
+    var user_id = profileIdElement.nextSibling.textContent.trim();
+
+    var recipeData = {
+        title: title,
+        ingredients: ingredients,
+        steps: steps,
+        user_id: user_id
+    };
+    var endpoint = 'http://40.76.241.98:5001/insert-recipe-details';
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(recipeData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
+        // Handle success - you can update UI or alert the user
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        // Handle errors here
+    });
 }
+
 // Function to handle the AI button click
 function askAI() {
     var prompt = document.getElementById('ai-prompt').value;

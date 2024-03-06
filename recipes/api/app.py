@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
@@ -8,6 +9,8 @@ import uuid
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = (
     f"postgresql://{os.getenv('RECIPES_USERNAME')}:"
     f"{os.getenv('RECIPES_PASSWORD')}@"
@@ -65,36 +68,28 @@ def get_recipe_details():
 
 @app.route("/insert-recipe-details", methods=["POST"])
 def insert_recipe_details():
-    blog_title = request.form.get('blog_title')
-    blog_ingredients = request.form.get('blog_ingredients')
-    blog_description = request.form.get('blog_description')
-    user_id = request.form.get('user_id')
+    data = request.get_json()
+    user_id = data.get('user_id')
     blog_id = f"{user_id}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
 
-    # Parse data from the request
-    data = request.get_json()
-    
     try:
-        # Create a new Recipe object
         new_recipe = Recipe(
-            blog_id=data.get('blog_id'),
-            user_id=data.get('user_id'),
-            blog_title=data.get('blog_title'),
-            blog_ingredients=data.get('blog_ingredients'),
-            blog_description=data.get('blog_description'),
-            likes=data.get('likes', 0),  # Default likes to 0 if not provided
-            timestamp=datetime.utcnow()
+            blog_id=blog_id,
+            user_id=user_id,
+            blog_title=data.get('title'),
+            blog_ingredients=data.get('ingredients'),
+            blog_description=data.get('steps'),
+            likes=data.get('likes', 0),
+            timestamp=datetime.now()
         )
-        
-        # Add the new recipe to the session and commit
+            
         db.session.add(new_recipe)
         db.session.commit()
-        
-        # Return a success message
-        return jsonify({"message": "Recipe inserted successfully."}), 201
+        return jsonify({"message": "Recipe inserted successfully.", "blog_id": blog_id}), 201
+
     except Exception as e:
-        # For any error, rollback the session and return an error message
         db.session.rollback()
+        print(str(e))
         return jsonify({"error": "An error occurred while inserting the recipe.", "details": str(e)}), 500
 
 
