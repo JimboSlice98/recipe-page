@@ -214,7 +214,7 @@ function addRecipe(userId) {
         steps: steps,
         user_id: userId
     };
-    var endpoint = 'http://40.76.241.98:5001/insert-recipe-details';
+    var endpoint = 'http://sse-recipes.uksouth.azurecontainer.io:5000//insert-recipe-details';
     fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -246,7 +246,7 @@ function addComment(blogId, userId) {
       comment: commentText,
     };
 
-    var endpoint = 'http://40.76.241.98:5001/submit-comment';
+    var endpoint = 'http://sse-comments.uksouth.azurecontainer.io:5000/submit-comment';
     fetch(endpoint, {
       method: 'POST',
       headers: {
