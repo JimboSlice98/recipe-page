@@ -50,7 +50,7 @@ def get_user_details():
         # users_details = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
         users_details = [
             {
-                "user_id": row.UserID,  # Make sure this matches the case used in the database
+                "user_id": row.UserID,  
                 "email": row.Email,
                 "display_name": row.DisplayName,
                 "cooking_level": row.CookingLevel,

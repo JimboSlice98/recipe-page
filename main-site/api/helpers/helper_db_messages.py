@@ -25,8 +25,8 @@ class MessagesDatabaseManager:
     def initialize_database(cls):
         try:
             DATABASE_URL = (
-                f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@"
-                f"{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}?sslmode={os.environ['DB_SSLMODE']}"
+                f"postgresql://{os.environ['MESSAGING_DB_USER']}:{os.environ['MESSAGING_DB_PASSWORD']}@"
+                f"{os.environ['MESSAGING_DB_HOST']}:{os.environ['MESSAGING_DB_PORT']}/{os.environ['MESSAGING_DB_NAME']}?sslmode={os.environ['MESSAGING_DB_SSLMODE']}"
             )
             cls.engine = create_engine(DATABASE_URL)
             cls.metadata.bind = cls.engine
