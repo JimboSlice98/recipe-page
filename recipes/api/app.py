@@ -82,7 +82,7 @@ def insert_recipe_details():
             likes=data.get('likes', 0),
             timestamp=datetime.now()
         )
-            
+
         db.session.add(new_recipe)
         db.session.commit()
         return jsonify({"message": "Recipe inserted successfully.", "blog_id": blog_id}), 201

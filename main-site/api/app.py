@@ -302,10 +302,10 @@ def fetch_user_details(user_id):
     print("data from fetch function is", response_code, error, data)
     return response_code, error, data
 
-def fetch_comments(blog_id):
+def fetch_comments():
     url = 'http://sse-comments.uksouth.azurecontainer.io:5000/get-comments'
     
-    response_code, error, data = fetch_data_from_microservice(url, "blog_id", blog_id)
+    response_code, error, data = fetch_data_from_microservice(url, "", None)
     print("data from fetch function is", response_code, error, data)
     return response_code, error, data
 
@@ -323,15 +323,13 @@ def home():
     user_id = request.args.get('user_id', default=2, type=int)
     response_code, settings_error, user_data = fetch_user_details(user_id)
     response_code, settings_error, recipe_data = fetch_recipes(user_id)
+    response_code, settings_error, comments = fetch_comments()
 
-    # print('\n\n\n\n', user_id, '\n', recipe_data)
+    print('\n\n\n', comments)
     
     profile = user_data[0] if user_data else {}
     
-    blogs, blog_ids = filter_blogs_by_user(user_id, recipe_data)
-    comments = filter_comments_by_blog_ids(blog_ids, comment_data)
-
-    # print('\n\n\n\n', blogs, '\n', comments)
+    blogs, blog_ids = filter_blogs_by_user(user_id, recipe_data)    
 
     images_by_blog = {}
     for blog_id in blog_ids:

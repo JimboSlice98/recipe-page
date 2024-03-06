@@ -67,7 +67,7 @@
               <label for="recipe-steps" class="form-label">Steps</label>
               <textarea class="form-control" id="recipe-steps" rows="5" placeholder="Describe the steps here" required></textarea>
             </div>
-            <button type="button" class="btn btn-primary" onclick="addRecipe()">Add Recipe</button>
+            <button type="button" class="btn btn-primary" onclick="addRecipe('{{ profile.user_id }}')">Add Recipe</button>
           </form>
         </div>
       </div>
@@ -160,20 +160,23 @@
               </button>
 
               <!-- Comments section -->
-              {% if comments.get(blog_id) %}
+              {% if comments %}
                 <div class="comments-section">
-                  {% for comment_id, comment in comments[blog_id].items() %}
-                    <div class="comment mb-2">
-                      <strong>{{ comment.user_id }} says:</strong> "{{ comment.comment_string }}"
-                    </div>
+                  {% for comment in comments %}
+                    {% if comment.blog_id == blog_id %}
+                      <div class="comment mb-2">
+                        <strong>User {{ comment.user_id }} says:</strong> "{{ comment.message }}"
+                      </div>
+                    {% endif %}
                   {% endfor %}
                 </div>
               {% endif %}
+
               <!-- Add a comment form -->
-              <form class="d-flex justify-content-between align-items-center mt-3">
-                <input class="form-control me-2" type="text" placeholder="Add a comment...">
-                <button class="btn btn-outline-primary" type="submit">Comment</button>
-              </form>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <input class="form-control me-2" type="text" id="comment-text" placeholder="Add a comment..." required>
+                <button class="btn btn-outline-primary" type="button" onclick="addComment('{{ blog_id }}', '{{ blog.user_id }}')">Comment</button>
+              </div>
             </div>
           </div>
         {% endfor %}
@@ -200,18 +203,16 @@ function toggleHeart(button) {
         heart.classList.add('bi-heart');
     }
 }
-function addRecipe() {
+function addRecipe(userId) {
     var title = document.getElementById('recipe-title').value;
     var ingredients = document.getElementById('recipe-ingredients').value;
     var steps = document.getElementById('recipe-steps').value;
-    var profileIdElement = document.querySelector('.profile-page h4 strong');
-    var user_id = profileIdElement.nextSibling.textContent.trim();
 
     var recipeData = {
         title: title,
         ingredients: ingredients,
         steps: steps,
-        user_id: user_id
+        user_id: userId
     };
     var endpoint = 'http://40.76.241.98:5001/insert-recipe-details';
     fetch(endpoint, {
@@ -234,10 +235,40 @@ function addRecipe() {
     .catch((error) => {
         console.error('Error:', error);
         // Handle errors here
+    }); 
+}
+function addComment(blogId, userId) {
+    var commentText = document.getElementById('comment-text').value;
+
+    var commentData = {
+      blog_id: blogId,
+      user_id: userId,
+      comment: commentText,
+    };
+
+    var endpoint = 'http://40.76.241.98:5001/submit-comment';
+    fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(commentData),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+      console.log('Success:', data);
+      // Handle success - you can update UI or alert the user
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      // Handle errors here
     });
 }
-
-// Function to handle the AI button click
 function askAI() {
     var prompt = document.getElementById('ai-prompt').value;
     // Call the Flask endpoint to generate the recipe

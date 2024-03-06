@@ -1,18 +1,22 @@
 import pyodbc
 from flask import Flask, request, jsonify, render_template, render_template_string
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os, requests
+from datetime import datetime
 
 
 load_dotenv()
 
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route("/get-comments", methods=["GET"])
 def get_comments():
     blog_id = request.args.get("blog_id")
+    print(blog_id)
 
     print(
         f"Driver   = {{{os.environ['COMMENTS_DRIVER']}}};\n"
@@ -67,12 +71,12 @@ def get_comments():
 @app.route("/submit-comment", methods=["POST"])
 def submit_comment():
     data = request.json
-    time_stamp = data.get("time_stamp")
     blog_id = data.get("blog_id")
     user_id = data.get("user_id")
-    message = data.get("message")
+    message = data.get("comment")
+    time_stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
     
-    if not all([time_stamp, blog_id, user_id, message]):
+    if not all([blog_id, user_id, message]):
         return jsonify({"error": "Missing required fields"}), 400
     
     try:
@@ -93,8 +97,10 @@ def submit_comment():
         return jsonify({"success": "Comment submitted successfully"}), 201
 
     except pyodbc.Error as e:
+        print(str(e))
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
+        print(str(e))
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
 

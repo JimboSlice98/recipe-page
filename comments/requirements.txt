@@ -1,5 +1,6 @@
 Flask==3.0.2
 Flask_Login==0.6.3
+Flask-Cors==4.0.0
 oauthlib==3.2.2
 python-dotenv==1.0.1
 Requests==2.31.0
