@@ -6,8 +6,6 @@ import psycopg2
 
 from dotenv import load_dotenv
 
-def foo():
-    print("Hello")
 
 load_dotenv()
 
@@ -20,6 +18,7 @@ class MessagesDatabaseManager:
                     Column('message', Text),
                     Column('sender', Integer),
                     Column('time_stamp', Text))
+    
 
     @classmethod
     def initialize_database(cls):
@@ -33,6 +32,7 @@ class MessagesDatabaseManager:
             cls.Session = sessionmaker(bind=cls.engine)
         except Exception as e:
             print(f"Database connection failed: {e}")
+            raise 
 
     @staticmethod
     def insert_message(message_data):
