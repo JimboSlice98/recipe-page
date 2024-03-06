@@ -131,10 +131,8 @@ def delete_comment():
         return jsonify({"success": "Comment deleted successfully"}), 200
 
     except pyodbc.Error as e:
-        print(str(e))
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
-        print(str(e))
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
 

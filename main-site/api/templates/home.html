@@ -81,7 +81,10 @@
         {% for blog_id, blog in blogs.items() %}
           <div class="card rounded mb-4">
             <div class="card-body">
-              <h5 class="card-title" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_title }}</h5>
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_title }}</h5>
+                <button class="btn btn-danger btn-sm" onclick="deleteRecipe('{{ blog_id }}')">Delete Recipe</button>
+              </div>
               <!-- Image gallery for this blog -->
               {% if images_by_blog.get(blog_id) %}
                 <div id="carouselBlog-{{ blog_id }}" class="carousel slide" data-bs-ride="carousel">
@@ -215,7 +218,7 @@ function addRecipe(userId) {
         steps: steps,
         user_id: userId
     };
-    var endpoint = 'http://sse-recipes.uksouth.azurecontainer.io:5000//insert-recipe-details';
+    var endpoint = 'http://sse-recipes.uksouth.azurecontainer.io:5000/insert-recipe-details';
     fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -237,6 +240,24 @@ function addRecipe(userId) {
         console.error('Error:', error);
         // Handle errors here
     }); 
+}
+function deleteRecipe(blogId) {
+    if (!confirm("Are you sure you want to delete this recipe?")) {
+        return;
+    }
+    
+    fetch(`http://sse-recipes.uksouth.azurecontainer.io:5000/delete-recipe-details/${blogId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+        // window.location.reload();
+        location.reload();
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
 }
 function addComment(blogId, userId) {
     var commentText = document.getElementById('comment-text').value;
@@ -263,7 +284,8 @@ function addComment(blogId, userId) {
     })
     .then(data => {
       console.log('Success:', data);
-      // Handle success - you can update UI or alert the user
+      // window.location.reload();
+      location.reload();
     })
     .catch(error => {
       console.error('Error:', error);
@@ -271,7 +293,7 @@ function addComment(blogId, userId) {
     });
 }
 function deleteComment(timeStamp, blogId) {
-  const endpoint = `http://40.76.241.98:5001/delete-comment?time_stamp=${timeStamp}&blog_id=${blogId}`;
+  const endpoint = `http://sse-comments.uksouth.azurecontainer.io:5000/delete-comment?time_stamp=${timeStamp}&blog_id=${blogId}`;
   fetch(endpoint, {
     method: 'DELETE',
   })
