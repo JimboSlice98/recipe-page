@@ -18,30 +18,30 @@ import pyodbc
 
 load_dotenv()
 
-# # Database class to handle contacting Message
-# from api.helpers.helper_db_messages import MessagesDatabaseManager 
+if os.environ.get("IS_PRODUCTION") == "PRODUCTION":
+    # # For development?
+    from helpers.helper_db_messages import MessagesDatabaseManager 
 
-# # Get function to contact openAI
-# from api.helpers.helper_AI import get_recipe_from_prompt
+    # Get function to contact openAI
+    from helpers.helper_AI import get_recipe_from_prompt
 
-# # Images database class to contact Messages
-# from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+    # Images database class to contact Messages
+    from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
 
-# from api.helpers.helper_login import authenticate_user
+    # Import helper functions for login
 
-# # For development?
-from helpers.helper_db_messages import MessagesDatabaseManager 
+    from helpers.helper_login import authenticate_user
+else:
+    # Database class to handle contacting Message
+    from api.helpers.helper_db_messages import MessagesDatabaseManager 
 
-# Get function to contact openAI
-from helpers.helper_AI import get_recipe_from_prompt
+    # Get function to contact openAI
+    from api.helpers.helper_AI import get_recipe_from_prompt
 
-# Images database class to contact Messages
-from helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
+    # Images database class to contact Messages
+    from api.helpers.helper_db_images import ImageStorageManager, comment_data, blog_data
 
-# Import helper functions for login
-
-from helpers.helper_login import authenticate_user
-
+    from api.helpers.helper_login import authenticate_user
 
 # Configure app.py
 app = Flask(__name__)
