@@ -73,7 +73,6 @@ jobs:
           
       - name: Set environment variables in Azure Web App
         run: |
-          az webapp config appsettings set --name YourRecipeWorld --resource-group YourResourceGroupName --settings SECRET_KEY=${{ secrets.FLASK_KEY }} AUTHENTICATION_DRIVER=${{ secrets.AUTHENTICATION_DRIVER }} AUTHENTICATION_SERVER=${{ secrets.AUTHENTICATION_SERVER }} AUTHENTICATION_DATABASE=${{ secrets.AUTHENTICATION_DATABASE }} AUTHENTICATION_USERNAME=${{ secrets.AUTHENTICATION_USERNAME }} AUTHENTICATION_PASSWORD=${{ secrets.AUTHENTICATION_PASSWORD }}
+          az webapp config appsettings set --name YourRecipeWorld --resource-group YourResourceGroupName --settings "SECRET_KEY=${{ secrets.FLASK_KEY }}" "AUTHENTICATION_DRIVER=${{ secrets.AUTHENTICATION_DRIVER }}" "AUTHENTICATION_SERVER=${{ secrets.AUTHENTICATION_SERVER }}" "AUTHENTICATION_DATABASE=${{ secrets.AUTHENTICATION_DATABASE }}" "AUTHENTICATION_USERNAME=${{ secrets.AUTHENTICATION_USERNAME }}" "AUTHENTICATION_PASSWORD=${{ secrets.AUTHENTICATION_PASSWORD }}"
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-
