@@ -97,59 +97,45 @@ def submit_comment():
         return jsonify({"success": "Comment submitted successfully"}), 201
 
     except pyodbc.Error as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+
+@app.route("/delete-comment", methods=["DELETE"])
+def delete_comment():
+    time_stamp = request.args.get("time_stamp")
+    blog_id = request.args.get("blog_id")
+
+    if not all([time_stamp, blog_id]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        conn_str = (
+            f"Driver={{{os.environ['COMMENTS_DRIVER']}}};"
+            f"Server={os.environ['COMMENTS_SERVER']};"
+            f"Database={os.environ['COMMENTS_DATABASE']};"
+            f"UID={os.environ['COMMENTS_USERNAME']};"
+            f"PWD={os.environ['COMMENTS_PASSWORD']};"
+        )
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+
+        query = "DELETE FROM Comments WHERE time_stamp = ? AND blog_id = ?"
+        cursor.execute(query, (time_stamp, blog_id))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Comment not found"}), 404
+
+        return jsonify({"success": "Comment deleted successfully"}), 200
+
+    except pyodbc.Error as e:
         print(str(e))
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
         print(str(e))
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
-
-
-@app.route("/new-comment", methods=["GET"])
-def new_comment():
-    # HTML form with JavaScript to submit form data as JSON
-    form_html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Submit Comment</title>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    </head>
-    <body>
-        <h2>Submit New Comment</h2>
-        <form id="commentForm">
-            Time Stamp: <input type="text" name="time_stamp"><br>
-            Blog ID: <input type="number" name="blog_id"><br>
-            User ID: <input type="number" name="user_id"><br>
-            Message: <textarea name="message"></textarea><br>
-            <input type="submit" value="Submit Comment">
-        </form>
-
-        <script>
-            $("#commentForm").submit(function(event) {
-                event.preventDefault(); // Prevent the form from submitting via the browser
-                var formData = $(this).serializeArray();
-                var jsonData = {};
-                $.each(formData, function() {
-                    jsonData[this.name] = this.value || '';
-                });
-                $.ajax({
-                    url: "/submit-comment",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify(jsonData),
-                    success: function(response) {
-                        alert("Comment submitted successfully!");
-                    },
-                    error: function(xhr, status, error) {
-                        alert("Error submitting comment: " + xhr.responseText);
-                    }
-                });
-            });
-        </script>
-    </body>
-    </html>
-    """
-    return render_template_string(form_html)
 
 
 @app.route("/", methods=["GET"])
