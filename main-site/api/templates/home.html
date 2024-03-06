@@ -234,7 +234,7 @@ function addRecipe(userId) {
     })
     .then(data => {
         console.log('Success:', data);
-        // Handle success - you can update UI or alert the user
+        location.reload();
     })
     .catch((error) => {
         console.error('Error:', error);
