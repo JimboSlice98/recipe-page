@@ -12,9 +12,7 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from azure.data.tables import TableServiceClient, TableClient
 
-
 import pyodbc
-
 
 load_dotenv()
 

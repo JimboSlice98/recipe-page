@@ -35,8 +35,7 @@ jobs:
       - name: Run pytest
         run: |
           source venv/bin/activate
-          pytest main-site/tests
-        working-directory: . 
+          PYTHONPATH=./main-site pytest main-site/tests
 
       - name: Zip artifact for deployment
         run: zip -r release.zip ./*
