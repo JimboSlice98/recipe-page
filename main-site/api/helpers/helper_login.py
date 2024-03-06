@@ -35,6 +35,15 @@ def authenticate_user(user_id, password):
             f"UID={os.environ['AUTHENTICATION_USERNAME']};"
             f"PWD={os.environ['AUTHENTICATION_PASSWORD']};"
         )
+
+        print(
+            f"Driver   = {{{os.environ['AUTHENTICATION_DRIVER']}}};\n"
+            f"Server   = {os.environ['AUTHENTICATION_SERVER']};\n"
+            f"Database = {os.environ['AUTHENTICATION_DATABASE']};\n"
+            f"UID      = {os.environ['AUTHENTICATION_USERNAME']};\n"
+            f"PWD      = {os.environ['AUTHENTICATION_PASSWORD']};\n"
+        )
+
         conn = pyodbc.connect(conn_str)
         cursor = conn.cursor()
         

@@ -71,7 +71,7 @@ jobs:
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_432E0FF062964311A6EB42BBF78A9DE7 }}
           environment-variables: >
-            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            SECRET_KEY=${{ secrets.FLASK_KEY }}
             AUTHENTICATION_DRIVER=${{ secrets.AUTHENTICATION_DRIVER }}
             AUTHENTICATION_SERVER=${{ secrets.AUTHENTICATION_SERVER }}
             AUTHENTICATION_DATABASE=${{ secrets.AUTHENTICATION_DATABASE }}

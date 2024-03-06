@@ -32,7 +32,7 @@ salt_and_hash = __import__(f"{base_path}.helper_login", fromlist=['salt_and_hash
 
 # Configure app.py
 app = Flask(__name__)
-app.config['SECRET_KEY'] = "os.getenv('SECRET_KEY')"
+app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
 
 # Initialize Flask-Login
 login_manager = LoginManager()
