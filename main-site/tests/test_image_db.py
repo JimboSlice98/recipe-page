@@ -8,8 +8,8 @@ from api.helpers.helper_db_images import ImageStorageManager
 def image_storage_manager():
     return ImageStorageManager()
 
-# def test_upload_image_to_blob(image_storage_manager):
-#     image_storage_manager.upload_image_to_blob("test.jpg", "path_to_image.jpg")
+def test_upload_image_to_blob(image_storage_manager):
+    image_storage_manager.upload_image_to_blob("test.jpg", "path_to_image.jpg")
 
 def test_delete_image_from_blob(image_storage_manager):
     image_storage_manager.delete_image_from_blob("test.jpg")
