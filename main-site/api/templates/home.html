@@ -5,25 +5,35 @@
   <div class="row">
     <div class="col-12 grid-margin">
       {% if profile %}
-      <div class="card rounded mb-4">
-        <div class="card-body">
-          <h3 class="card-title text-center mb-4">Profile Info</h3>
-          <div class="row">
-            <!-- Left column for user_id, name, and bio -->
-            <div class="col-md-6">
-              <h4><strong>ID:</strong> {{ profile.user_id }}</h4>
-              <h5><strong>Name:</strong> {{ profile.display_name }}</h5>
-              <p><strong>Bio:</strong> {{ profile.short_bio }}</p>
+        {% if profile.user_id|string|trim == current_user.id|string|trim %}
+          <div class="card rounded mb-4">
+            <div class="card-body">
+              <h3 class="card-title text-center mb-4">Your Profile Details</h3>
+              <div class="row">
+                <!-- Left column for user_id, name, and bio -->
+                <div class="col-md-6">
+                  <h4><strong>ID:</strong> {{ profile.user_id }}</h4>
+                  <h5><strong>Name:</strong> {{ profile.display_name }}</h5>
+                  <p><strong>Bio:</strong> {{ profile.short_bio }}</p>
+                </div>
+                <!-- Right column for cooking ability, favorite cuisine, and location -->
+                <div class="col-md-6">
+                  <p><strong>Cooking Ability:</strong> {{ profile.cooking_level }}</p>
+                  <p><strong>Favorite Cuisine:</strong> {{ profile.favorite_cuisine }}</p>
+                  <p><strong>Location:</strong> {{ profile.location }}</p>
+                </div>
+              </div>
             </div>
-            <!-- Right column for cooking ability, favorite cuisine, and location -->
-            <div class="col-md-6">
-              <p><strong>Cooking Ability:</strong> {{ profile.cooking_level }}</p>
-              <p><strong>Favorite Cuisine:</strong> {{ profile.favorite_cuisine }}</p>
-              <p><strong>Location:</strong> {{ profile.location }}</p>
+          </div> 
+        {% else %}
+          <!-- New section for interaction encouragement -->
+          <div class="card rounded mb-4">
+            <div class="card-body">
+              <h3 class="card-title text-center mb-4">Discover Recipes</h3>
+              <p>You are viewing <strong>{{ profile.display_name }}'s</strong> favourite recipes. Feel free to like them, save them to your own collection, or leave comments on <strong>{{ profile.display_name }}'s</strong> recipes. Your interaction is highly appreciated!</p>
             </div>
           </div>
-        </div>
-      </div>      
+        {% endif %}
       {% else %}
         <p>No profile information available. Please update your profile.</p>
       {% endif %}
@@ -201,27 +211,33 @@
 </div>
 
 <script>
+var currentUserId = "{{ current_user.get_id() }}";
 document.addEventListener('DOMContentLoaded', function() {
-  // Find all elements that need a display name update
-  const userElements = document.querySelectorAll('.user-display-name');
+    const userElements = document.querySelectorAll('.user-display-name');
 
-  userElements.forEach(element => {
-    const userId = element.getAttribute('data-user-id');
-    
-    // Fetch the user details from the microservice
-    fetch(`http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details?user_id=${userId}`)
-      .then(response => response.json())
-      .then(data => {
-        // Assuming the microservice returns an array and we're interested in the first item
-        if (data && data.length > 0) {
-          const userDisplayName = data[0].display_name;
-          // Update the element with the display name
-          element.textContent = `${userDisplayName} says:`;
-        }
-      })
-      .catch(error => console.error('Error fetching user details:', error));
+    userElements.forEach(element => {
+      const userId = element.getAttribute('data-user-id');
+      
+      if (userId === currentUserId) {
+        // Update the element text to "You said:"
+        element.textContent = "You:";
+      } else {
+        // Fetch the user details from the microservice
+        fetch(`http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details?user_id=${userId}`)
+          .then(response => response.json())
+          .then(data => {
+            // Assuming the microservice returns an array and we're interested in the first item
+            if (data && data.length > 0) {
+              const userDisplayName = data[0].display_name;
+              // Update the element with the display name
+              element.textContent = `${userDisplayName}:`;
+            }
+          })
+          .catch(error => console.error('Error fetching user details:', error));
+      }
+    });
   });
-});
+
 function toggleHeart(button) {
     var heart = button.querySelector('svg');
     if (heart.classList.contains('bi-heart')) {
