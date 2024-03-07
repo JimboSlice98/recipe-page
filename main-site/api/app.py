@@ -29,6 +29,8 @@ get_recipe_from_prompt = __import__(f"{base_path}.helper_AI", fromlist=['get_rec
 ImageStorageManager = __import__(f"{base_path}.helper_db_images", fromlist=['ImageStorageManager']).ImageStorageManager
 User = __import__(f"{base_path}.helper_login", fromlist=['User']).User
 salt_and_hash = __import__(f"{base_path}.helper_login", fromlist=['salt_and_hash']).salt_and_hash
+register_user_details = __import__(f"{base_path}.helper_login", fromlist=['register_user_details']).register_user_details
+register_user_password = __import__(f"{base_path}.helper_login", fromlist=['register_user_password']).register_user_password
 
 # Configure app.py
 app = Flask(__name__)
@@ -440,6 +442,27 @@ def logout():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    error = None
     if request.method == 'POST':
-        return 'Registration successful'
-    return render_template('register.html')
+        display_name = request.form.get('display_name')
+        password = request.form.get('password')
+        passwordnot = request.form.get('passwordnot')
+
+        if password != passwordnot:
+            error = 'Passwords do not match!'
+            return render_template('register.html', error=error)
+
+        user_id = register_user_details(display_name)
+        if user_id == None:
+            error = 'Unable to register user, please try again later'
+            return render_template('register.html', error=error)
+        
+        if register_user_password(user_id, password):
+            return redirect(url_for('login'))
+
+        error = 'Unable to register user, please try again later'
+    
+    return render_template('register.html', error=error)

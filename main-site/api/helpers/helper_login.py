@@ -27,6 +27,7 @@ class User(UserMixin):
 
 
 def authenticate_user(user_id, password):
+    print(user_id, password)
     try:
         conn_str = (
             f"Driver={{{os.environ['AUTHENTICATION_DRIVER']}}};"
@@ -94,3 +95,53 @@ def salt_and_hash(password):
     salt = bcrypt.gensalt()
     hash = bcrypt.hashpw(bytes, salt)
     return hash.decode('utf-8')
+
+
+def register_user_details(display_name):
+    print(display_name)
+    microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/add-user'
+    
+    try:
+        response = requests.post(microservice_url, json={"DisplayName": display_name})
+        
+        if response.status_code == 201:
+            new_user_id = response.json().get('user_id')
+            print(f'Account created successfully! Your user ID is {new_user_id}.')
+            return new_user_id
+        else:
+            print(f'Failed to create account: {response.json().get("error")}')
+            return None
+    
+    except requests.RequestException as e:            
+            print(f'Network error: {str(e)}')
+            return None
+
+
+def register_user_password(user_id, password):
+    hashed_password = salt_and_hash(password)
+    print(user_id, hashed_password)
+    try:
+        conn_str = (
+            f"Driver={{{os.environ['AUTHENTICATION_DRIVER']}}};"
+            f"Server={os.environ['AUTHENTICATION_SERVER']};"
+            f"Database={os.environ['AUTHENTICATION_DATABASE']};"
+            f"UID={os.environ['AUTHENTICATION_USERNAME']};"
+            f"PWD={os.environ['AUTHENTICATION_PASSWORD']};"
+        )
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+        
+        # Assuming you also have a column for display_name in your Users table
+        query = "INSERT INTO Users (user_id, password_hash) VALUES (?, ?)"
+        cursor.execute(query, (user_id, hashed_password))
+        conn.commit()
+        
+    except pyodbc.Error as e:
+        print(str(e))
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+    
+    print("id and password saved to auth table")
+    return True
