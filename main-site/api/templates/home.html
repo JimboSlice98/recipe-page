@@ -44,6 +44,7 @@
   <!-- Main content column -->
   <div class="col-12 col-lg-8">
     <!-- Toggleable Add Recipe Container -->
+    {% if profile.user_id|string|trim == current_user.id|string|trim %}
     <div class="card rounded mb-3">
       <div class="card-header" role="tab">
         <h6 class="mb-0" style="font-size: 1.5rem; font-weight: bold;">
@@ -82,6 +83,7 @@
         </div>
       </div>
     </div>
+    {% endif %}
 
   <!-- Recipe Section -->
   <div class="row justify-content-center profile-body">
@@ -205,11 +207,16 @@
           </div>
         {% endfor %}
       {% else %}
+      <!-- No recipes found -->
         <div class="text-center my-5">
-          <img src="path_to_your_cartoon_image_of_food" alt="No recipes found" class="img-fluid" style="max-width: 200px;">
+          <img src="static/images/no_recipes_found_wide.webp" alt="No recipes found" class="img-fluid" style="max-width: 500px;">
           <h3 class="mt-3">No Recipes Found</h3>
-          <p class="text-muted">We couldn't find any recipes for this user. Try searching for something else!</p>
-          <a class="btn btn-primary" href="/home">Go Back</a>
+          {% if profile.user_id|string|trim == current_user.id|string|trim %}
+            <p class="text-muted">You don't have any reciped saved. Try adding some or using AI to help!</p>
+          <!-- <a class="btn btn-primary" href="/home">Go Back</a> -->
+          {% else %}
+            <p class="text-muted">We couldn't find any recipes for this user. Try searching for someone else!</p>
+          {% endif %}
         </div>
       {% endif %}
     </div>
