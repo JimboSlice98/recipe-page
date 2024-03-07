@@ -206,26 +206,17 @@ def upload_image():
 
 
 ################### END IMAGE STORAGE PATH ###################
-################# START FUNCTION CLUSTERFUCK #################
+####################### START FUNCTIONS ######################
 
 
-def filter_blogs_by_user(user_id, blog_data):
-    # user_id = str(user_id)
-    filtered_blogs = {}
-    blog_ids = []
-    for blog in blog_data:
-        if blog['user_id'] == user_id:
-            filtered_blogs[blog['blog_id']] = blog
-            blog_ids.append(blog['blog_id'])
-    return filtered_blogs, blog_ids
+def extract_recipe_ids(user_id, recipes):
+    processed_recipes = {}
+    recipe_ids = []
+    for recipe in recipes:
+        processed_recipes[recipe['blog_id']] = recipe
+        recipe_ids.append(recipe['blog_id'])
+    return processed_recipes, recipe_ids
 
-
-def filter_comments_by_blog_ids(blog_ids, comment_data):
-    filtered_comments = {}
-    for blog_id in blog_ids:
-        if blog_id in comment_data:
-            filtered_comments[blog_id] = comment_data[blog_id]
-    return filtered_comments
 
 def fetch_data_from_microservice(url, id_type=None, id_value=None):
     try:
@@ -244,6 +235,7 @@ def fetch_data_from_microservice(url, id_type=None, id_value=None):
     except ValueError as e:
         return None, "Failed to decode JSON from response", {}
     
+
 def fetch_user_details(user_id=None):
     url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
     
@@ -251,14 +243,16 @@ def fetch_user_details(user_id=None):
     print("data from fetch function is", response_code, error, data)
     return response_code, error, data
 
+
 def fetch_comments():
     url = 'http://sse-comments.uksouth.azurecontainer.io:5000/get-comments'
     
-    response_code, error, data = fetch_data_from_microservice(url, "", None)
+    response_code, error, data = fetch_data_from_microservice(url)
     print("data from fetch function is", response_code, error, data)
     return response_code, error, data
 
-def fetch_recipes(user_id):
+
+def fetch_recipes(user_id=None):
     url = 'http://sse-recipes.uksouth.azurecontainer.io:5000/get-recipe-details'
     
     response_code, error, data = fetch_data_from_microservice(url, "user_id", user_id)
@@ -266,7 +260,7 @@ def fetch_recipes(user_id):
     return response_code, error, data
 
 
-################## END FUNCTION CLUSTERFUCK ##################
+######################## END FUNCTIONS #######################
 ################### START MAIN PAGE ROUTING ##################
 
 
@@ -286,19 +280,17 @@ def home():
     response_code, settings_error, comments = fetch_comments()
     
     profile = user_data[0] if user_data else {}    
-    blogs, blog_ids = filter_blogs_by_user(user_id, recipe_data)    
+    recipes, recipe_ids = extract_recipe_ids(user_id, recipe_data)    
     images_by_blog = {}
 
-    for blog_id in blog_ids:        
-        images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
-        images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
-    
-    print("Images: ", images_by_blog)
+    for recipe_id in recipe_ids:        
+        images_metadata = image_storage_manager.fetch_images_metadata(user_id, recipe_id)
+        images_by_blog[recipe_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
 
     if profile == {}:
         return render_template("no-user.html")
     else:    
-        return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
+        return render_template("home.html", user_id=user_id, blogs=recipes, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
     
 
 @app.route('/', defaults={'path': ''})
