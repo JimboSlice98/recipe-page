@@ -130,17 +130,13 @@ def get_user_messages(user_id1, user_id2):
 @login_required
 def generate_recipe():
     try:
-        # use this line in production, but not in testing 
         user_input = request.form['prompt']
-        # user_input = "a delicious chocolate cake"
         output = get_recipe_from_prompt(user_input)
         print("here is the output that we pass to jinja\n\n", output)
-        # {title, ingredients, steps} - the keys
         return jsonify(output)
     
     except Exception as e:
-        # Handle errors
-        print(e)  # Print the error to the console
+        print(e)
         return jsonify({'error': str(e)}), 500
 
 
