@@ -25,7 +25,7 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install -r main-site/requirement.txt
+          pip install -r main-site/requirements.txt
           pip list
 
       - name: Run pytest
