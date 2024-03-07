@@ -56,7 +56,8 @@ function_base_url ="https://comments-function.azurewebsites.net"
 @app.route('/messages', methods=['GET'])
 @login_required
 def get_messages():
-    user_id = request.args.get('user_id', default=1)
+    user_id = request.args.get('user_id', default=int(current_user.id), type=int)
+    # user_id = request.args.get('user_id', default=1)
     function_url = f"{function_base_url}/messages?user_id={user_id}"
     print(function_url)
     response = requests.get(function_url)
