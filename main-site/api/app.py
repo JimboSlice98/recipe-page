@@ -4,7 +4,7 @@ from datetime import timedelta
 import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, redirect, render_template, request, session,
-                   url_for, jsonify, session)
+                   url_for, jsonify, session, flash)
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 
 # from azure.identity import DefaultAzureCredential
@@ -402,7 +402,7 @@ def update_profile():
         # Check if the microservice successfully processed the request
         if response.status_code == 200:
             # Redirect to the profile page with a success message
-            return redirect(url_for('profile', user_id=user_id, message='Profile updated successfully'))
+            return redirect(url_for('home'))
         else:
             # Redirect to the profile page with an error message
             return redirect(url_for('profile', user_id=user_id, error='Failed to update profile'))
@@ -461,7 +461,8 @@ def register():
             return render_template('register.html', error=error)
         
         if register_user_password(user_id, password):
-            return redirect(url_for('login'))
+            # flash(f'Registration successful! Your user ID is {user_id}.')
+            return render_template('register.html', user_id=user_id, error=error)
 
         error = 'Unable to register user, please try again later'
     

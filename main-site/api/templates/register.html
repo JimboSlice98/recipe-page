@@ -37,6 +37,37 @@
             </div>
         </div>
     </div>
+    <!-- Registration Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="successModalLabel">Registration Successful</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            Registration successful! Your user ID is <span id="userId"></span>. Redirecting to login...
+            </div>
+        </div>
+        </div>
+    </div>
+{% if user_id %}
+<script>
+$(document).ready(function(){
+    $("#userId").text("{{ user_id }}");
+
+    var myModal = new bootstrap.Modal(document.getElementById('successModal'), {
+        keyboard: false,
+        backdrop: 'static'
+    });
+    myModal.show();
+
+    setTimeout(function() {
+        window.location.href = "{{ url_for('login') }}";
+    }, 5000);
+});
+</script>
+{% endif %}
 </body>
 </html>
 {% endblock %}
