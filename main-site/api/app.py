@@ -160,7 +160,7 @@ def display_images():
     images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
     blob_urls_by_blog_id = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
     print("\n\n/display-images worked", blob_urls_by_blog_id, "\n\n")
-    
+
     return render_template('display_images.html', blob_urls_by_blog_id=blob_urls_by_blog_id)
 
 @app.route('/delete-image', methods=['POST'])
@@ -227,11 +227,12 @@ def filter_comments_by_blog_ids(blog_ids, comment_data):
             filtered_comments[blog_id] = comment_data[blog_id]
     return filtered_comments
 
-def fetch_data_from_microservice(url, id_type, id_value):
+def fetch_data_from_microservice(url, id_type=None, id_value=None):
     try:
-        response = requests.get(url, params={id_type: str(id_value)})
-        # response = requests.get(url, params={user_id: str(user_id)})
+        params = {id_type: str(id_value)} if id_value is not None else {}
+        response = requests.get(url, params=params)
         response_code = response.status_code
+
         if response_code == 200:
             data = response.json()
             return response_code, None, data
@@ -243,7 +244,7 @@ def fetch_data_from_microservice(url, id_type, id_value):
     except ValueError as e:
         return None, "Failed to decode JSON from response", {}
     
-def fetch_user_details(user_id):
+def fetch_user_details(user_id=None):
     url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
     
     response_code, error, data = fetch_data_from_microservice(url, "user_id", user_id)
@@ -318,10 +319,39 @@ def not_found(e):
     return render_template("no-recipe.html"), 404
 
 
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('query', '').lower().strip()
+    users = fetch_user_details()[-1]
+
+    if not query:
+        return render_template('no_results.html', users=users)
+
+    exact_match = None
+    partial_matches = []
+
+    for user in users:
+        if query == user['display_name'].lower():
+            exact_match = user
+            break
+        elif query in user['display_name'].lower():
+            partial_matches.append(user)
+
+    if exact_match:
+        return redirect(url_for('home', user_id=exact_match['user_id']))
+    elif partial_matches:
+        if len(partial_matches) == 1:
+            return redirect(url_for('home', user_id=partial_matches[0]['user_id']))
+        else:
+            return render_template('search_results.html', query=query, users=partial_matches)
+    else:
+        return render_template('no_results.html', query=query, users=users)
+
+
 @app.route("/profile", methods=["GET"])
 @login_required
 def profile():
-    user_id = request.args.get('user_id', default=int(current_user.id), type=int)    
+    user_id = current_user.id
     response_code, settings_error, profile = fetch_user_details(user_id)
     profile = profile[0]    
     if not profile:
