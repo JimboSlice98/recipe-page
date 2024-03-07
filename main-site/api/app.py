@@ -228,13 +228,13 @@ def delete_image():
     return redirect(url_for('home', user_id=user_id)) 
 
 
-# Is this used? Need to check
-@app.route('/upload', methods=['GET'])
-@login_required
-def upload_form():
-    # Just render the upload form template, no need to generate a SAS token
-    # The upload_form.html does the post request to below
-    return render_template('upload_form.html')
+# # Is this used? Need to check
+# @app.route('/upload', methods=['GET'])
+# @login_required
+# def upload_form():
+#     # Just render the upload form template, no need to generate a SAS token
+#     # The upload_form.html does the post request to below
+#     return render_template('upload_form.html')
 
 
 @app.route('/upload-image', methods=['POST'])

@@ -81,7 +81,7 @@
         {% for blog_id, blog in blogs.items() %}
           <div class="card rounded mb-4">
             <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex justify-content-between align-items-center pb-3">
                 <h5 class="card-title mb-0" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_title }}</h5>
                 <button class="btn btn-danger btn-sm" onclick="deleteRecipe('{{ blog_id }}')">Delete Recipe</button>
               </div>
@@ -131,7 +131,7 @@
               {% endif %}
 
               <!-- Image Upload and View Recipe Details Button -->
-              <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-3 pt-3">
                 <!-- Upload Image Form -->
                 <form action="{{ url_for('upload_image') }}" method="post" enctype="multipart/form-data" class="me-2">
                   <input type="hidden" name="user_id" value="{{ blog.user_id }}">
@@ -166,20 +166,22 @@
               {% if comments %}
                 <div class="comments-section">
                   {% for comment in comments %}
-                    <div class="comment mb-2 d-flex justify-content-between">
-                      <div>
-                        <strong>User {{ comment.user_id }} says:</strong> "{{ comment.message }}"
+                    {% if comment.blog_id == blog_id %}
+                      <div class="comment mb-2 d-flex justify-content-between">
+                        <div>
+                          <strong>User {{ comment.user_id }} says:</strong> "{{ comment.message }}"
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteComment('{{ comment.time_stamp }}', '{{ comment.blog_id }}')">Delete</button>
                       </div>
-                      <button class="btn btn-danger btn-sm" onclick="deleteComment('{{ comment.time_stamp }}', '{{ comment.blog_id }}')">Delete</button>
-                    </div>
+                    {% endif %}
                   {% endfor %}
                 </div>
               {% endif %}
 
               <!-- Add a comment form -->
               <div class="d-flex justify-content-between align-items-center mt-3">
-                <input class="form-control me-2" type="text" id="comment-text" placeholder="Add a comment..." required>
-                <button class="btn btn-outline-primary" type="button" onclick="addComment('{{ blog_id }}', '{{ blog.user_id }}')">Comment</button>
+                <input class="form-control me-2 comment-text" type="text" placeholder="Add a comment..." required>
+                <button class="btn btn-outline-primary" type="button" onclick="addComment('{{ blog_id }}', '{{ current_user.id }}', this)">Comment</button>
               </div>
             </div>
           </div>
@@ -259,14 +261,17 @@ function deleteRecipe(blogId) {
         console.error('Error:', error);
     });
 }
-function addComment(blogId, userId) {
-    var commentText = document.getElementById('comment-text').value;
+function addComment(blogId, userId, buttonElement) {
+    var commentInput = buttonElement.previousElementSibling;
+    var commentText = commentInput.value;
 
     var commentData = {
-      blog_id: blogId,
-      user_id: userId,
-      comment: commentText,
+        blog_id: blogId,
+        user_id: userId,
+        comment: commentText,
     };
+    
+    console.log('Sending comment:', commentData);
 
     var endpoint = 'http://sse-comments.uksouth.azurecontainer.io:5000/submit-comment';
     fetch(endpoint, {
