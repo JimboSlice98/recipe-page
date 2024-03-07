@@ -6,25 +6,28 @@
     <div class="col-12 grid-margin">
       {% if profile %}
         {% if profile.user_id|string|trim == current_user.id|string|trim %}
-          <div class="card rounded mb-4">
-            <div class="card-body">
-              <h3 class="card-title text-center mb-4">Your Profile Details</h3>
-              <div class="row">
-                <!-- Left column for user_id, name, and bio -->
-                <div class="col-md-6">
-                  <h4><strong>ID:</strong> {{ profile.user_id }}</h4>
-                  <h5><strong>Name:</strong> {{ profile.display_name }}</h5>
-                  <p><strong>Bio:</strong> {{ profile.short_bio }}</p>
-                </div>
-                <!-- Right column for cooking ability, favorite cuisine, and location -->
-                <div class="col-md-6">
-                  <p><strong>Cooking Ability:</strong> {{ profile.cooking_level }}</p>
-                  <p><strong>Favorite Cuisine:</strong> {{ profile.favorite_cuisine }}</p>
-                  <p><strong>Location:</strong> {{ profile.location }}</p>
-                </div>
+        <div class="card rounded mb-4">
+          <div class="card-body">
+            <h3 class="card-title text-center mb-4">Your Profile Details</h3>
+            <div class="row">
+              <!-- Left column for user_id, name, and bio -->
+              <div class="col-md-6">
+                <h4><strong>ID:</strong> {{ profile.user_id }}</h4>
+                <h5><strong>Name:</strong> {{ profile.display_name }}</h5>
+                <p><strong>Bio:</strong> {{ profile.short_bio }}</p>
+              </div>
+              <!-- Right column for cooking ability, favorite cuisine, and location -->
+              <div class="col-md-6">
+                <p><strong>Cooking Ability:</strong> {{ profile.cooking_level }}</p>
+                <p><strong>Favorite Cuisine:</strong> {{ profile.favorite_cuisine }}</p>
+                <p><strong>Location:</strong> {{ profile.location }}</p>
               </div>
             </div>
-          </div> 
+            <!-- Message with link to profile page -->
+            <p style="font-size: 14px; color: grey;">You can edit your profile details by clicking the "Profile" button in the navbar.</p>
+          </div>
+        </div>
+        
         {% else %}
           <!-- New section for interaction encouragement -->
           <div class="card rounded mb-4">
