@@ -1,0 +1,17 @@
+Flask==3.0.2
+Flask_Login==0.6.3
+oauthlib==3.2.2
+python-dotenv==1.0.1
+Requests==2.31.0
+gunicorn==20.0.4
+azure-storage-blob==12.19.1
+pyodbc==5.1.0
+azure-data-tables==12.5.0
+azure-identity==1.15.0
+openai==1.12.0
+SQLAlchemy==2.0.27
+Flask-SQLAlchemy==3.1.1
+psycopg2-binary
+pytest==8.0.2
+pytest-mock==3.12.0
+bcrypt

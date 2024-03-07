@@ -28,6 +28,9 @@ jobs:
           pip install -r main-site/requirements.txt
           pip list
 
+      - name: Install dependencies
+        run: pip install -r main-site/requirements.txt
+
       - name: Run pytest
         run: |
           source venv/bin/activate
