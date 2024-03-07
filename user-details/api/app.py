@@ -39,7 +39,6 @@ def get_user_details():
         cursor = conn.cursor()
         
         if user_id:
-            # query = "SELECT * FROM user_details WHERE user_id = ?"
             query = "SELECT * FROM user_details WHERE UserID = ?"
             params = (user_id,)
         else:
@@ -47,10 +46,8 @@ def get_user_details():
             params = ()
 
         cursor.execute(query, params)
-        # cursor.execute(query)
         rows = cursor.fetchall()
         
-        # users_details = [{"user_id": row.user_id, "cooking_level": row.cooking_level, "birthday": row.birthday.strftime("%Y-%m-%d")} for row in rows]
         users_details = [
             {
                 "user_id": row.UserID,  

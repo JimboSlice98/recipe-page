@@ -160,7 +160,7 @@ def display_images():
     images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
     blob_urls_by_blog_id = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
     print("\n\n/display-images worked", blob_urls_by_blog_id, "\n\n")
-
+    
     return render_template('display_images.html', blob_urls_by_blog_id=blob_urls_by_blog_id)
 
 @app.route('/delete-image', methods=['POST'])
@@ -287,7 +287,7 @@ def home():
     profile = user_data[0] if user_data else {}    
     blogs, blog_ids = filter_blogs_by_user(user_id, recipe_data)    
     images_by_blog = {}
-    
+
     for blog_id in blog_ids:        
         images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
         images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)

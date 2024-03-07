@@ -2,10 +2,7 @@ import os
 from datetime import timedelta
 
 from dotenv import load_dotenv
-from flask import (redirect, render_template, request, 
-                   url_for)
-
-# from azure.identity import DefaultAzureCredential
+from flask import (redirect, render_template, request, url_for)
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
 from datetime import datetime, timedelta
 from azure.data.tables import TableServiceClient, TableClient
@@ -27,6 +24,7 @@ class ImageStorageManager:
         except Exception as e:
             print(f"An error occurred during initialization: {e}")
 
+
     def fetch_images_metadata(self, user_id, blog_id):
         images_metadata = {blog_id: []}
         try:
@@ -40,6 +38,7 @@ class ImageStorageManager:
             print(f"Error fetching entities: {e}")
 
         return images_metadata
+
 
     def generate_blob_urls_by_blog_id(self, images_metadata):
         blob_urls_by_blog_id = {}
@@ -62,48 +61,34 @@ class ImageStorageManager:
         
         return blob_urls_by_blog_id
 
+
     def upload_image_to_blob(self, unique_filename, file):
         """
         Uploads a local file to Azure Blob Storage.
         """
         conn_Str = self.IMAGE_STORAGE_CONNECTION_STRING
         print("here\n", conn_Str)
-        try:
-            
+        try:    
             blob_service_client = BlobServiceClient.from_connection_string(conn_Str)
-            
-            # Create the container if it doesn't exist
-            # container_client = blob_service_client.get_blob_client(container=ImageStorageManager.IMAGE_STORAGE_CONTAINER_NAME, blob=unique_filename)
-            # try:
-            #     container_client.create_container()
-            # except Exception as e:
-            #     print(f"Container already exists or another error occurred: {e}")
+        
         except:
             print("couldnt connect to the image storage")
+
         print("blobl uplodad", "connected to blob client")
-
-        # Create a blob client using the local file name as the name for the blob
         blob_client = blob_service_client.get_blob_client(container=self.IMAGE_STORAGE_CONTAINER_NAME, blob=unique_filename)
-        print("blobl uplodad", "got blob id")
-
-        # Upload the local file to blob storage
+        print("blobl uplodad", "got blob id")    
         blob_client.upload_blob(file, blob_type="BlockBlob", overwrite=True)
-
         print("blobl uplodad", "file", unique_filename)
-        
-        # print(f"File {upload_file_path} uploaded to {container_name}/{blob_name}")
 
 
     def delete_image_from_blob(self, blob_name):
-        try:
-            # Create a blob client
-            # blob_client = BlobServiceClient.from_connection_string(IMAGE_STORAGE_CONNECTION_STRING).get_blob_client(container=container_name, blob=blob_name)
-        
+        try:       
             blob_client = self.blob_service_client.get_blob_client(container=self.IMAGE_STORAGE_CONTAINER_NAME, blob=blob_name)
             blob_client.delete_blob()
             print(f"Blob {blob_name} deleted successfully.")
         except Exception as e:
             print(f"Failed to delete blob: {e}")
+
 
     def get_blob_sas_url(self, blob_name):
         try:
@@ -139,6 +124,7 @@ class ImageStorageManager:
             print(f"Entity could not be found: {e}")
             return None
 
+
     @staticmethod
     def generate_unique_filename(original_filename, user_id=1, blog_id=1):
         extension = os.path.splitext(original_filename)[1]
@@ -148,22 +134,17 @@ class ImageStorageManager:
     
     
     def insert_image_metadata(self, user_id, blog_id, original_filename, date):
-
         storage_connection_string = self.IMAGE_STORAGE_CONNECTION_STRING
-        # Generate unique parts of the filename
         unique_id = date
         extension = os.path.splitext(original_filename)[1]
-        # unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
         filename = f"{unique_id}_{user_id if user_id else 'guest'}{blog_id}{extension}"
 
-        # Create a table client
         try:
             table_client = TableClient.from_connection_string(conn_str=storage_connection_string, table_name=self.IMAGE_STORAGE_TABLE_NAME)
         except:
             print("failed to connect: insert_image_metadata")
             return redirect(url_for('404'))
 
-        # Define the entity to insert
         entity = {
             "PartitionKey": str(user_id),
             "RowKey": unique_id,
@@ -173,9 +154,7 @@ class ImageStorageManager:
             "Timestamp": datetime.now()
         }
 
-        # Insert the entity
         table_client.create_entity(entity=entity)
         print("finished inserting image metadata")
 
         return filename
-

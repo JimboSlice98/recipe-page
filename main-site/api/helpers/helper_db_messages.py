@@ -34,6 +34,7 @@ class MessagesDatabaseManager:
             print(f"Database connection failed: {e}")
             raise 
 
+
     @staticmethod
     def insert_message(message_data):
         session = MessagesDatabaseManager.Session()
@@ -47,6 +48,7 @@ class MessagesDatabaseManager:
             session.rollback()
         finally:
             session.close()
+
 
     @staticmethod
     def get_ordered_messages(user_ids):
@@ -63,6 +65,7 @@ class MessagesDatabaseManager:
             return list(result)
         finally:
             session.close()
+
 
     @staticmethod
     def get_user_id_conversations(user_id1):

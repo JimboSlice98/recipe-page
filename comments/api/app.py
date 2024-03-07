@@ -136,10 +136,5 @@ def delete_comment():
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
 
-@app.route("/", methods=["GET"])
-def root():
-    return render_template("index.html")
-
-
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
