@@ -56,7 +56,7 @@ function_base_url ="https://comments-function.azurewebsites.net"
 @app.route('/messages', methods=['GET'])
 @login_required
 def get_messages():
-    user_id = request.args.get('user_id')
+    user_id = request.args.get('user_id', default=1)
     function_url = f"{function_base_url}/messages?user_id={user_id}"
     print(function_url)
     response = requests.get(function_url)
@@ -133,45 +133,6 @@ def get_user_messages(user_id1, user_id2):
             ]
         return jsonify(messages_list), 200
 
-# @app.route('/post_message', methods=['POST'])
-# def post_message():
-    # message_data = request.json
-    # MessagesDatabaseManager.insert_message(message_data)
-    # return jsonify({'status': 'success', 'status_code': 200}), 200
-
-
-# @app.route('/get_messages/<int:user_id1>/<int:user_id2>', methods=['GET'])
-# def get_user_messages(user_id1, user_id2):
-    # messages = MessagesDatabaseManager.get_ordered_messages([user_id1, user_id2])
-    # messages_list = [
-    #         {
-    #             'chat_id': message[0],
-    #             'user_id1': message[1],
-    #             'user_id2': message[2],
-    #             'message': message[3],
-    #             'sender': message[4],
-    #             # Convert datetime to a string format, e.g., ISO format
-    #             'time_stamp': message[5].isoformat() if isinstance(message[5], datetime) else message[5]
-    #         }
-    #         for message in messages
-    #     ]
-    # return jsonify(messages_list), 200
-
-
-# @app.route('/start_chat', methods=['POST'])
-# def start_chat():
-    # message_data = request.json
-    # # Inserts a blank message into the table for a new chat
-    # MessagesDatabaseManager.insert_message(message_data) 
-    # return jsonify({'status': 'success', 'message': 'Chat started'}), 200
-
-
-# @app.route('/messages', methods=['GET'])
-# def get_messages():   
-    
-#     user_id = request.args.get('user_id', 1, type=int)  # Default to 1 if not specified
-#     conversations = MessagesDatabaseManager.get_user_id_conversations(user_id)
-#     return render_template("messages.html", user_id=user_id, conversations=conversations)
 
 ################### END MESSAGES PATHS ###################
 
@@ -228,15 +189,6 @@ def delete_image():
     return redirect(url_for('home', user_id=user_id)) 
 
 
-# # Is this used? Need to check
-# @app.route('/upload', methods=['GET'])
-# @login_required
-# def upload_form():
-#     # Just render the upload form template, no need to generate a SAS token
-#     # The upload_form.html does the post request to below
-#     return render_template('upload_form.html')
-
-
 @app.route('/upload-image', methods=['POST'])
 @login_required
 def upload_image():
@@ -254,7 +206,7 @@ def upload_image():
     print("/upload image", unique_filename, date)
     try: 
         image_storage_manager.upload_image_to_blob(unique_filename, file)
-        # Assume insert_image_metadata takes user_id, blog_id, original_filename, and a datetime string or object (`date`)
+        # Insert_image_metadata takes user_id, blog_id, original_filename, and a datetime string
         image_storage_manager.insert_image_metadata(user_id, blog_id, original_filename, date)
         return redirect(url_for('home', user_id=user_id))  
     

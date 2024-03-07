@@ -16,7 +16,8 @@
                 <button class="btn btn-outline-success" type="submit">Go</button>
             </form>
             <!-- Messages Button -->
-            <a href="/messages" class="btn btn-outline-info ms-2">Messages</a>
+            <a id="messagesButton" href="/messages" class="btn btn-outline-info ms-2">Messages</a>
+
             <!-- Profile Button -->
             <a href="/profile" class="btn btn-outline-info ms-2">Profile</a>
             <!-- Conditional Login/Logout Button -->
@@ -35,5 +36,14 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('user_id');
+            if (userId) {
+                document.getElementById('messagesButton').href += `?user_id=${userId}`;
+            }
+        });
+    </script>
 </body>
 </html>

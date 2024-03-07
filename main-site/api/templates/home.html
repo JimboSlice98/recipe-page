@@ -373,11 +373,7 @@ function askAI() {
         },
     })
     .then(response => response.json())
-    .then(data => {
-        // Assuming the data is the response text from OpenAI
-        // Here you will parse the text into title, ingredients, and steps
-        // And then set the values of your form fields
-        // This is a placeholder, you will need to replace it with actual parsing logic
+    .then(data => {        
         document.getElementById('recipe-title').value = data.title;
         document.getElementById('recipe-ingredients').value = data.ingredients;
         document.getElementById('recipe-steps').value = data.steps;
@@ -397,7 +393,7 @@ function askAI() {
   }
   
   .carousel-item {
-    width: 100%; /* You can adjust this value */
+    width: 100%; 
     flex: 0 0 auto;
   }
   
@@ -410,7 +406,7 @@ function askAI() {
   }
   
   .modal-body {
-    text-align: center; /* Center modal images */
+    text-align: center;
   }
   
   .modal-content {
@@ -419,16 +415,16 @@ function askAI() {
   }
   .carousel-control-prev-icon,
 .carousel-control-next-icon {
-  background-image: none; /* Remove the default background images */
+  background-image: none; 
 }
 
 .carousel-control-prev-icon:after,
 .carousel-control-next-icon:after {
-  content: ''; /* Add a new 'after' pseudo-element for the arrow */
+  content: ''; 
   display: inline-block;
-  background: darkgray; /* Change to your desired color */
-  width: 20px; /* Width of the arrow */
-  height: 20px; /* Height of the arrow */
+  background: darkgray; 
+  width: 20px; 
+  height: 30px; 
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;

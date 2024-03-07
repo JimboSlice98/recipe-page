@@ -41,10 +41,9 @@
 <body>
     <h1>Upload Image to Azure Blob Storage</h1>
     <form action="{{ url_for('upload_image') }}" method="post" enctype="multipart/form-data">
-        <!-- Hidden fields for user_id and blog_id -->
-        <!-- THIS IS TEMPORARY UNTIL WE HAVE USER_ID AND BLOG_ID PASSED IN! -->
-        <input type="hidden" name="user_id" value="2"> <!-- Example value; replace as needed -->
-        <input type="hidden" name="blog_id" value="1"> <!-- Example value; replace as needed -->
+        <!-- Hidden fields for user_id and blog_id -->        
+        <input type="hidden" name="user_id" value="2"> 
+        <input type="hidden" name="blog_id" value="1"> 
         
         <input type="file" id="fileInput" name="image" required>
         <input type="submit" value="Upload">

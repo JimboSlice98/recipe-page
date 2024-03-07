@@ -6,10 +6,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messages</title>
-    <!-- Update to use Bootstrap 5 CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom styles to make it more aesthetic -->
+    <title>Messages</title>    
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">    
     <style>
         body {
             background-color: #f8f9fa;
@@ -18,11 +16,11 @@
             max-width: 960px;
         }
         #message-container {
-            height: 400px; /* Fixed height for the message container */
+            height: 400px; 
             background-color: #fff;
             box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
             overflow-y: auto; /* Enables vertical scrolling */
-            padding-bottom: 20px; /* Adds some space at the bottom */
+            padding-bottom: 20px; 
         }
         .message-bubble {
             display: block;
@@ -51,13 +49,13 @@
     <div class="container py-5">
         <div class="row g-4">
             <div class="col-md-4">
-                <!-- Enhanced search box with Bootstrap 5 styling -->
+                <!-- search box  -->
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" placeholder="Enter user_id to chat" id="new-chat-user-id" aria-label="Recipient's user_id">
                     <button class="btn btn-outline-primary" type="button" id="start-new-chat">Start Chat</button>
                 </div>
                 <div id="user-list" class="list-group">
-                    <!-- Dynamically populate user list with enhanced styling -->
+                    <!-- Populate user list  -->
                     {% for other_user_id in conversations %}
                     <a href="#" class="list-group-item list-group-item-action" data-userid="{{ other_user_id }}">{{ other_user_id }}</a>
                     {% endfor %}
@@ -65,7 +63,7 @@
             </div>
             <div class="col-md-8">
                 <div id="message-container" class="border rounded p-4 bg-light">
-                    <!-- Messages will be shown here with improved aesthetics -->
+                    <!-- Messages -->
                 </div>
                 <form id="message-form" class="d-flex gap-2 mt-4">
                     <input type="hidden" id="current-user-id" value="{{ user_id }}">
@@ -86,20 +84,18 @@
                     let alignmentClass = message.sender === parseInt(currentUserID) ? 'my-message' : 'other-message';
                     let messageDiv = `<div class="message-bubble ${alignmentClass}"><p>${message.message}</p></div>`;
                     $('#message-container').append(messageDiv);
-                });
-                // Scroll to the bottom of the message container
+                });                
                 scrollToBottom();
             });
         }
-        // Call this function after sending a message as well
+
         function scrollToBottom() {
             $('#message-container').scrollTop($('#message-container')[0].scrollHeight);
         }
         $('#start-new-chat').click(function() {
             let newChatUserID = $('#new-chat-user-id').val();
             let currentUserID = $('#current-user-id').val();
-
-            // Optionally insert a default blank message or just create a chat entry
+            
             $.ajax({
                 url: '/start_chat',
                 type: 'POST',
@@ -107,12 +103,10 @@
                 data: JSON.stringify({
                     'user_id1': currentUserID,
                     'user_id2': newChatUserID,
-                    'message': '', // You might opt to not send a message
+                    'message': '', 
                     'sender': currentUserID
                 }),
-                success: function(response) {
-                    // After starting the chat, reload the page or just the user list
-                    // Here, for simplicity, I'll just reload the page to reflect the new chat
+                success: function(response) {                   
                     location.reload();
                 }
             });
@@ -123,9 +117,8 @@
                 e.preventDefault();
                 let currentUserID = $('#current-user-id').val();
                 let otherUserID = $(this).data('userid');
-                $('#other-user-id').val(otherUserID); // Update hidden input
-                
-                loadMessages(currentUserID, otherUserID); // Call loadMessages with both user IDs
+                $('#other-user-id').val(otherUserID);                 
+                loadMessages(currentUserID, otherUserID); 
                 
             });
             
@@ -133,8 +126,8 @@
             $('#message-form').submit(function(event) {
                 event.preventDefault();
                 let messageText = $('#message').val();
-                let currentUserID = $('#current-user-id').val(); // Correctly get currentUserID
-                let otherUserID = $('#other-user-id').val(); // Correctly get otherUserID
+                let currentUserID = $('#current-user-id').val(); 
+                let otherUserID = $('#other-user-id').val(); 
 
                 $.ajax({
                     url: '/post_message',
@@ -147,8 +140,9 @@
                         'sender': currentUserID
                     }),
                     success: function(response) {
-                        $('#message').val(''); // Clear the input field
-                        loadMessages(currentUserID, otherUserID); // Reload messages
+                        // Clear the input field
+                        $('#message').val(''); 
+                        loadMessages(currentUserID, otherUserID); 
                     }
                 });
             });
