@@ -93,7 +93,9 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center pb-3">
                 <h5 class="card-title mb-0" style="font-size: 2rem; font-family: 'Nunito', sans-serif;">{{ blog.blog_title }}</h5>
-                <button class="btn btn-danger btn-sm" onclick="deleteRecipe('{{ blog_id }}')">Delete Recipe</button>
+                {% if profile.user_id|string|trim == current_user.id|string|trim %}
+                  <button class="btn btn-danger btn-sm" onclick="deleteRecipe('{{ blog_id }}')">Delete Recipe</button>
+                {% endif %}
               </div>
               <!-- Image gallery for this blog -->
               {% if images_by_blog.get(blog_id) %}
@@ -107,10 +109,12 @@
                           <img src="{{ image_url }}" class="d-block w-100" alt="..." style="height: auto; max-height: 500px; object-fit: contain;" data-bs-toggle="modal" data-bs-target="#modal-{{ blog_id }}-{{ loop.index0 }}">
           
                           <!-- Delete Button -->
+                          {% if profile.user_id|string|trim == current_user.id|string|trim %}
                           <form action="{{ url_for('delete_image') }}" method="post" class="position-absolute" style="top: 0; right: 0; z-index: 2;">
                             <input type="hidden" name="blob_url" value="{{ image_url }}">
                             <button type="submit" class="btn btn-danger btn-sm">&times;</button>
                           </form>
+                          {% endif %}
                         </div>
                       </div>
                     {% endfor %}
@@ -182,7 +186,9 @@
                         <!-- Add a data-user-id attribute to hold the user ID -->
                         <strong class="user-display-name" data-user-id="{{ comment.user_id }}">User {{ comment.user_id }} says:</strong> "{{ comment.message }}"
                       </div>
-                      <button class="btn btn-danger btn-sm" onclick="deleteComment('{{ comment.time_stamp }}', '{{ comment.blog_id }}')">Delete</button>
+                      {% if comment.user_id|string|trim == current_user.id|string|trim %}
+                        <button class="btn btn-danger btn-sm" onclick="deleteComment('{{ comment.time_stamp }}', '{{ comment.blog_id }}')">Delete</button>
+                      {% endif %}
                     </div>
                   {% endif %}
                 {% endfor %}
@@ -219,17 +225,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const userId = element.getAttribute('data-user-id');
       
       if (userId === currentUserId) {
-        // Update the element text to "You said:"
         element.textContent = "You:";
-      } else {
-        // Fetch the user details from the microservice
+      } else {        
         fetch(`http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details?user_id=${userId}`)
           .then(response => response.json())
           .then(data => {
-            // Assuming the microservice returns an array and we're interested in the first item
+            
             if (data && data.length > 0) {
               const userDisplayName = data[0].display_name;
-              // Update the element with the display name
               element.textContent = `${userDisplayName}:`;
             }
           })
@@ -279,7 +282,6 @@ function addRecipe(userId) {
     })
     .catch((error) => {
         console.error('Error:', error);
-        // Handle errors here
     }); 
 }
 function deleteRecipe(blogId) {
@@ -293,7 +295,6 @@ function deleteRecipe(blogId) {
     .then(response => response.json())
     .then(data => {
         console.log('Success:', data);
-        // window.location.reload();
         location.reload();
     })
     .catch((error) => {
@@ -328,12 +329,11 @@ function addComment(blogId, userId, buttonElement) {
     })
     .then(data => {
       console.log('Success:', data);
-      // window.location.reload();
       location.reload();
     })
     .catch(error => {
       console.error('Error:', error);
-      // Handle errors here
+  
     });
 }
 function deleteComment(timeStamp, blogId) {
@@ -349,8 +349,7 @@ function deleteComment(timeStamp, blogId) {
   })
   .then(data => {
     console.log('Success:', data);
-    // Optionally: Remove the comment from the DOM or refresh the page to reflect the deletion
-    window.location.reload(); // Simple way to refresh the comments
+    window.location.reload();
   })
   .catch(error => {
     console.error('Error:', error);
