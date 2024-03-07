@@ -1,19 +1,15 @@
 import os
+import pyodbc
 from datetime import timedelta
-
 import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, redirect, render_template, request, session,
                    url_for, jsonify, session, flash)
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
-
-# from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from azure.data.tables import TableServiceClient, TableClient
-
-import pyodbc
 
 load_dotenv()
 
@@ -32,11 +28,9 @@ salt_and_hash = __import__(f"{base_path}.helper_login", fromlist=['salt_and_hash
 register_user_details = __import__(f"{base_path}.helper_login", fromlist=['register_user_details']).register_user_details
 register_user_password = __import__(f"{base_path}.helper_login", fromlist=['register_user_password']).register_user_password
 
-# Configure app.py
+# Configure flask server
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
-
-# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -48,10 +42,12 @@ def load_user(user_id):
 # Initialise Database manager
 MessagesDatabaseManager.initialize_database()
 
-# Intialise the Image Storaga Manager
+# Intialise the Image Storage Manager
 image_storage_manager = ImageStorageManager()
 
-################### START MESSAGES PATHS ###################
+
+################## START MESSAGES PATHS ##################
+
 
 function_base_url ="https://comments-function.azurewebsites.net"
 
@@ -59,7 +55,6 @@ function_base_url ="https://comments-function.azurewebsites.net"
 @login_required
 def get_messages():
     user_id = request.args.get('user_id', default=int(current_user.id), type=int)
-    # user_id = request.args.get('user_id', default=1)
     function_url = f"{function_base_url}/messages?user_id={user_id}"
     print(function_url)
     response = requests.get(function_url)
@@ -69,7 +64,6 @@ def get_messages():
         print("\n/Messages Function failed!\n")
         conversations = MessagesDatabaseManager.get_user_id_conversations(user_id)
         return render_template("messages.html", user_id=user_id, conversations=conversations)
-        # return render_template('messages.html', conversations=response.json())
 
 
 @app.route('/start_chat', methods=['POST'])
@@ -84,28 +78,19 @@ def start_chat():
         print("Start chat failed using messages function")
         MessagesDatabaseManager.insert_message(message_data) 
         return jsonify({'status': 'success', 'message': 'Chat started'}), 200
-        # return "Error starting chat", response.status_code  
 
 
 @app.route('/post_message', methods=['POST'])
 @login_required
 def post_message():
-    # Extract the JSON payload from the incoming request
     message_data = request.json
-
-    # Construct the URL to your Azure Function endpoint for posting a message
     function_url = f"{function_base_url}/post_message"
-
-    # Make a POST request to the Azure Function endpoint with the message data
     response = requests.post(function_url, json=message_data)
 
-    # Check if the request to the Azure Function was successful
     if response.ok:
         print("posted the messsage")
-        # Return the JSON response from the Azure Function
         return jsonify(response.json()), 200
     else:
-        # In case of an error, return an error response
         print("failed to post the message using function")
         MessagesDatabaseManager.insert_message(message_data)
         return jsonify({'status': 'success', 'status_code': 200}), 200
@@ -138,8 +123,8 @@ def get_user_messages(user_id1, user_id2):
 
 
 ################### END MESSAGES PATHS ###################
+##################### START AI PATHS #####################
 
-################### START AI PATHS ###################
 
 @app.route('/generate-recipe', methods=['POST'])
 @login_required
@@ -158,12 +143,13 @@ def generate_recipe():
         print(e)  # Print the error to the console
         return jsonify({'error': str(e)}), 500
 
-################### END AI PATHS ###################
 
-################### START IMAGE STORAGE PATH ###################
+##################### END AI PATHS #####################
+############### START IMAGE STORAGE PATH ###############
+
 
 app.config['UPLOAD_FOLDER'] = 'static/images'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB upload limit
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 @app.route('/display-images')
 @login_required
@@ -218,36 +204,10 @@ def upload_image():
         # set to 100 so home will redirect to 404 page for now
         return redirect(url_for('home'), user_id=100)    
 
+
 ################### END IMAGE STORAGE PATH ###################
+################# START FUNCTION CLUSTERFUCK #################
 
-
-@app.route("/", methods=["GET"])
-def index():
-    if current_user.is_authenticated:
-        return redirect(url_for('home', user_id=current_user.get_id()))
-
-    user_id = 2  # The user ID you want to fetch settings for
-    url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/get-user-details'
-    
-    try:
-        response = requests.get(url, params={"user_id": str(user_id)})
-        if response.status_code == 200:
-            data = response.json()
-                    
-            if data:
-                profile = data[0]
-                return render_template("index.html", profile=profile)
-            else:            
-                return render_template("index.html", error="User not found")
-        else:
-            return render_template("index.html", error=f"Failed to fetch user settings. Status code: {response.status_code}")
-    
-    except requests.exceptions.RequestException as e:
-        return render_template("index.html", error=str(e))
-    except ValueError as e:
-        return render_template("index.html", error="Failed to decode JSON from response")
-
-################### START FUNCTION CLUSTERFUCK ###################
 
 def filter_blogs_by_user(user_id, blog_data):
     # user_id = str(user_id)
@@ -304,7 +264,17 @@ def fetch_recipes(user_id):
     print("data from fetch function is", response_code, error, data)
     return response_code, error, data
 
-################### END FUNCTION CLUSTERFUCK ###################
+
+################## END FUNCTION CLUSTERFUCK ##################
+################### START MAIN PAGE ROUTING ##################
+
+
+@app.route("/", methods=["GET"])
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('home', user_id=current_user.get_id()))
+    return render_template("index.html")
+
 
 @app.route("/home", methods=["GET"])
 @login_required
@@ -314,15 +284,12 @@ def home():
     response_code, settings_error, recipe_data = fetch_recipes(user_id)
     response_code, settings_error, comments = fetch_comments()
     
-    profile = user_data[0] if user_data else {}
-    
+    profile = user_data[0] if user_data else {}    
     blogs, blog_ids = filter_blogs_by_user(user_id, recipe_data)    
-
     images_by_blog = {}
-    for blog_id in blog_ids:
-        # images_metadata = fetch_all_images_metadata(user_id, blog_id)
+    
+    for blog_id in blog_ids:        
         images_metadata = image_storage_manager.fetch_images_metadata(user_id, blog_id)
-        # images_by_blog[blog_id] = generate_blob_urls_by_blog_id(images_metadata)
         images_by_blog[blog_id] = image_storage_manager.generate_blob_urls_by_blog_id(images_metadata)
     
     print("Images: ", images_by_blog)
@@ -331,7 +298,6 @@ def home():
         return render_template("no-user.html")
     else:    
         return render_template("home.html", user_id = user_id, blogs=blogs, comments=comments, profile=profile, images_by_blog=images_by_blog, error=settings_error)
-    
     
 
 @app.route('/', defaults={'path': ''})
@@ -350,11 +316,6 @@ def redirect_https_to_http():
 @app.errorhandler(404)
 def not_found(e):
     return render_template("no-recipe.html"), 404
-
-
-# @app.route("/no-users", methods=["GET"])
-# def not_users():
-#     return render_template("no-recipe.html")
 
 
 @app.route("/profile", methods=["GET"])
@@ -391,24 +352,15 @@ def update_profile():
     
     microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:5000/update-user-details'
     
-    # this is for testing in live environment
-    # microservice_url = 'http://sse-user-details.uksouth.azurecontainer.io:6000/update-user-details'
-    # microservice_url = 'http://127.0.0.1:5000/update-user-details'
-    
     try:
-        # Send the POST request to the microservice
         response = requests.post(microservice_url, json=payload)
         
-        # Check if the microservice successfully processed the request
         if response.status_code == 200:
-            # Redirect to the profile page with a success message
             return redirect(url_for('home'))
         else:
-            # Redirect to the profile page with an error message
             return redirect(url_for('profile', user_id=user_id, error='Failed to update profile'))
     except requests.exceptions.RequestException as e:
-        # Handle any exceptions that occur during the request to the microservice
-        print(e)
+        print(str(e))
         return redirect(url_for('profile', user_id=user_id, error='An error occurred while updating the profile'))
 
 
@@ -460,8 +412,7 @@ def register():
             error = 'Unable to register user, please try again later'
             return render_template('register.html', error=error)
         
-        if register_user_password(user_id, password):
-            # flash(f'Registration successful! Your user ID is {user_id}.')
+        if register_user_password(user_id, password):            
             return render_template('register.html', user_id=user_id, error=error)
 
         error = 'Unable to register user, please try again later'
