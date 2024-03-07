@@ -1,5 +1,6 @@
 import pyodbc
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os, requests
 
@@ -8,6 +9,7 @@ load_dotenv()
 
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route("/get-user-details", methods=["GET"])
