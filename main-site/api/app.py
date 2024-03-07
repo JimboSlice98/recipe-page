@@ -338,6 +338,13 @@ def catch_all(path):
     abort(404)
 
 
+@app.before_request
+def redirect_https_to_http():
+    if request.is_secure:
+        http_url = request.url.replace('https://', 'http://', 1)
+        return redirect(http_url, code=301)
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("no-recipe.html"), 404
